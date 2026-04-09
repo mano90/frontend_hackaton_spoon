@@ -1,0 +1,133 @@
+    .page { padding: 2rem; max-width: 1300px; margin: 0 auto; }
+    h1 { font-size: 1.8rem; margin-bottom: 1.5rem; color: #1e293b; }
+    h1 i { margin-right: 0.5rem; color: #6366f1; }
+
+    .upload-zone {
+      border: 2px dashed #cbd5e1; border-radius: 12px; padding: 1.5rem; text-align: center;
+      cursor: pointer; transition: all 0.2s; margin-bottom: 1.5rem; background: #f8fafc;
+    }
+    .upload-zone:hover { border-color: #6366f1; background: #eef2ff; }
+    .upload-svg { width: 64px; height: 64px; margin: 0 auto 0.5rem; }
+    .upload-svg svg { width: 100%; height: 100%; }
+    .upload-zone p { margin: 0; color: #64748b; font-size: 0.9rem; }
+    .error-msg { background: #fef2f2; color: #dc2626; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; }
+
+    .tabs { display: flex; gap: 0.4rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .tab { padding: 0.45rem 0.9rem; border: 1px solid #e2e8f0; border-radius: 8px; background: white; cursor: pointer; font-size: 0.82rem; color: #64748b; transition: all 0.2s; display: flex; align-items: center; gap: 0.35rem; }
+    .tab:hover { border-color: #6366f1; color: #6366f1; }
+    .tab.active { background: #6366f1; color: white; border-color: #6366f1; }
+    .tab-count { background: rgba(0,0,0,0.1); padding: 0.1rem 0.35rem; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
+    .tab.active .tab-count { background: rgba(255,255,255,0.25); }
+
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    th { background: #f1f5f9; padding: 0.65rem 0.9rem; text-align: left; font-weight: 600; color: #475569; font-size: 0.82rem; }
+    td { padding: 0.55rem 0.9rem; border-top: 1px solid #f1f5f9; font-size: 0.88rem; }
+    .montant { font-weight: 600; color: #6366f1; }
+    .empty { text-align: center; color: #94a3b8; padding: 2rem !important; }
+    .actions { display: flex; gap: 0.4rem; }
+    .btn-view { background: #eef2ff; color: #6366f1; border: none; padding: 0.4rem 0.6rem; border-radius: 6px; cursor: pointer; }
+    .btn-view:hover { background: #e0e7ff; }
+    .btn-delete { background: #fee2e2; color: #dc2626; border: none; padding: 0.4rem 0.6rem; border-radius: 6px; cursor: pointer; }
+    .btn-delete:hover { background: #fecaca; }
+
+    .type-badge { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
+    .type-badge[data-type="devis"] { background: #eef2ff; color: #6366f1; }
+    .type-badge[data-type="bon_commande"] { background: #dbeafe; color: #3b82f6; }
+    .type-badge[data-type="bon_livraison"] { background: #fef3c7; color: #d97706; }
+    .type-badge[data-type="bon_reception"] { background: #dcfce7; color: #16a34a; }
+    .type-badge[data-type="facture"] { background: #fee2e2; color: #ef4444; }
+    .type-badge[data-type="email"] { background: #f1f5f9; color: #64748b; }
+    .type-badge i { margin-right: 0.2rem; }
+    .badge-scenario { background: #eef2ff; color: #6366f1; padding: 0.12rem 0.35rem; border-radius: 4px; font-size: 0.72rem; font-weight: 600; }
+    .badge-rel { background: #dcfce7; color: #16a34a; padding: 0.12rem 0.35rem; border-radius: 4px; font-size: 0.72rem; }
+    .badge-no-rel { background: #f1f5f9; color: #94a3b8; padding: 0.12rem 0.35rem; border-radius: 4px; font-size: 0.72rem; }
+
+    .pagination { display: flex; align-items: center; gap: 0.3rem; margin-top: 1rem; justify-content: center; }
+    .pagination button { padding: 0.4rem 0.7rem; border: 1px solid #e2e8f0; border-radius: 6px; background: white; cursor: pointer; font-size: 0.85rem; color: #475569; transition: all 0.15s; }
+    .pagination button:hover:not(:disabled) { border-color: #6366f1; color: #6366f1; }
+    .pagination button.active { background: #6366f1; color: white; border-color: #6366f1; }
+    .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .page-info { margin-left: 0.75rem; font-size: 0.8rem; color: #94a3b8; }
+
+    /* Slide panel (Notion-style) */
+    .slide-backdrop {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.3); z-index: 999;
+      animation: fadeIn 0.2s ease;
+    }
+    .slide-panel {
+      position: fixed; top: 0; right: 0; bottom: 0; width: 55vw; max-width: 750px; min-width: 400px;
+      background: white; z-index: 1000; display: flex; flex-direction: column;
+      box-shadow: -8px 0 30px rgba(0,0,0,0.15);
+      animation: slideIn 0.25s ease;
+    }
+    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    .slide-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.85rem 1.25rem; border-bottom: 1px solid #e2e8f0; background: #f8fafc; flex-shrink: 0;
+    }
+    .slide-title { font-weight: 600; color: #1e293b; font-size: 0.92rem; }
+    .slide-title i { margin-right: 0.4rem; color: #ef4444; }
+    .slide-close {
+      background: none; border: none; font-size: 1.1rem; cursor: pointer; color: #64748b;
+      width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    }
+    .slide-close:hover { background: #f1f5f9; color: #1e293b; }
+    .slide-frame { flex: 1; border: none; width: 100%; }
+
+    /* Modals (for classification/duplicate) */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1001; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.15s ease; }
+
+    /* Classification modal */
+    .classify-modal { height: auto; max-height: 92vh; max-width: 700px; overflow-y: auto; }
+    .warning-header { background: #fffbeb; border-bottom-color: #fde68a; }
+    .warning-header .modal-title { color: #92400e; }
+    .classify-body { padding: 1.5rem; }
+    .classify-alert { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; text-align: center; }
+    .classify-alert p { margin: 0.25rem 0; color: #92400e; }
+    .confidence { margin-top: 0.5rem !important; }
+    .classify-pdf-preview { width: 100%; height: 250px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 1rem; }
+    .classify-question { font-weight: 600; color: #334155; margin-bottom: 0.75rem; }
+
+    .classify-types { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1.25rem; }
+    .classify-type-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 0.3rem; padding: 0.75rem;
+      border: 2px solid #e2e8f0; border-radius: 10px; background: white; cursor: pointer; font-size: 0.8rem;
+      color: #475569; transition: all 0.15s; font-weight: 600;
+    }
+    .classify-type-btn i { font-size: 1.2rem; }
+    .classify-type-btn:hover { border-color: #6366f1; color: #6366f1; }
+    .classify-type-btn.suggested { border-color: #6366f1; background: #eef2ff; color: #6366f1; }
+    .suggested-tag { font-size: 0.6rem; background: #6366f1; color: white; padding: 0.1rem 0.3rem; border-radius: 3px; }
+
+    .classify-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
+    .classify-actions button { padding: 0.6rem 1.1rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.88rem; }
+    .btn-cancel { background: #f1f5f9; color: #64748b; }
+    .btn-cancel:hover { background: #e2e8f0; }
+    .btn-keep { background: #eef2ff; color: #6366f1; }
+    .btn-keep:hover { background: #e0e7ff; }
+    .btn-replace { background: #6366f1; color: white; }
+    .btn-replace:hover { background: #4f46e5; }
+
+    .comparison { display: flex; gap: 1rem; margin-bottom: 1.25rem; }
+    .compare-card { flex: 1; border-radius: 10px; padding: 0.75rem; border: 2px solid #e2e8f0; }
+    .compare-card.incoming { border-color: #6366f1; background: #eef2ff; }
+    .compare-card.existing { border-color: #f59e0b; background: #fffbeb; }
+    .compare-card h4 { margin: 0 0 0.5rem; font-size: 0.85rem; color: #475569; }
+    .compare-row { display: flex; justify-content: space-between; padding: 0.2rem 0; font-size: 0.82rem; }
+    .compare-row span { color: #94a3b8; }
+
+    /* Tab background SVG watermark */
+    .tab-bg-svg {
+      position: fixed; bottom: 20px; right: 20px; width: 280px; height: 280px;
+      opacity: 0.06; pointer-events: none; z-index: 0;
+      animation: bgFadeIn 0.8s ease forwards;
+    }
+    .tab-bg-svg svg { width: 100%; height: 100%; }
+    @keyframes bgFadeIn {
+      0% { opacity: 0; transform: scale(0.7) rotate(-15deg); }
+      100% { opacity: 0.06; transform: scale(1) rotate(0deg); }
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

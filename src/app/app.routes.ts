@@ -4,7 +4,6 @@ export const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   { path: 'dashboard', loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.DashboardComponent) },
   { path: 'documents', loadComponent: () => import('./pages/documents/documents').then(m => m.DocumentsComponent) },
-  { path: 'factures', loadComponent: () => import('./pages/factures/factures').then(m => m.FacturesComponent) },
   { path: 'mouvements', loadComponent: () => import('./pages/mouvements/mouvements').then(m => m.MouvementsComponent) },
   { path: 'rapprochement', loadComponent: () => import('./pages/rapprochement/rapprochement').then(m => m.RapprochementComponent) },
   { path: 'timeline', loadComponent: () => import('./pages/timeline/timeline').then(m => m.TimelineComponent) },

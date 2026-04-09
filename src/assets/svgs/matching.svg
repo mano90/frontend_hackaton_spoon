@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Left doc 3D -->
+  <path d="M15,40 L75,35 L82,42 L82,120 L20,125 Z" />
+  <path d="M75,35 L82,42 L75,40 Z" />
+  <line x1="28" y1="58" x2="68" y2="55" />
+  <line x1="28" y1="70" x2="62" y2="68" />
+  <line x1="28" y1="82" x2="58" y2="80" />
+  <!-- Right doc 3D -->
+  <path d="M118,40 L178,35 L185,42 L185,120 L123,125 Z" />
+  <path d="M178,35 L185,42 L178,40 Z" />
+  <line x1="130" y1="58" x2="172" y2="55" />
+  <line x1="130" y1="70" x2="168" y2="68" />
+  <line x1="130" y1="82" x2="162" y2="80" />
+  <!-- Connection arrows -->
+  <path d="M82,70 C95,65 105,65 118,70" stroke-width="2.5" />
+  <path d="M82,90 C95,85 105,85 118,90" stroke-width="2.5" />
+  <!-- Big checkmark circle -->
+  <circle cx="100" cy="155" r="28" />
+  <polyline points="87,155 96,165 115,143" stroke-width="4" />
+  <!-- Shadow -->
+  <path d="M20,125 L25,130 L87,126 L82,120" stroke-dasharray="4,4" opacity="0.3" />
+  <path d="M123,125 L128,130 L190,126 L185,120" stroke-dasharray="4,4" opacity="0.3" />
+</svg>

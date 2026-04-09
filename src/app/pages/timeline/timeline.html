@@ -1,0 +1,76 @@
+    <div class="page">
+      <h1><i class="fas fa-stream"></i> Timeline</h1>
+
+      <div class="filters">
+        <div class="filter-group">
+          <label><i class="fas fa-filter"></i> Scenario</label>
+          <select [(ngModel)]="selectedScenario" (ngModelChange)="load()">
+            <option value="">Tous</option>
+            @for (s of scenarioIds(); track s) {
+              <option [value]="s">{{ s }}</option>
+            }
+          </select>
+        </div>
+        <div class="filter-group">
+          <label><i class="fas fa-tag"></i> Type</label>
+          <select [(ngModel)]="selectedType" (ngModelChange)="applyFilters()">
+            <option value="">Tous</option>
+            <option value="devis">Devis</option>
+            <option value="bon_commande">Bon de commande</option>
+            <option value="bon_livraison">Bon de livraison</option>
+            <option value="bon_reception">Bon de reception</option>
+            <option value="facture">Facture</option>
+            <option value="mouvement">Paiement</option>
+            <option value="email">Email</option>
+          </select>
+        </div>
+        <span class="event-count"><i class="fas fa-chart-bar"></i> {{ filteredEvents().length }} evenements</span>
+      </div>
+
+      <!-- Horizontal scrollable timeline -->
+      <div class="tl-scroll">
+        <div class="tl-track">
+          <!-- The line -->
+          <div class="tl-line"></div>
+
+          @for (event of filteredEvents(); track event.id; let i = $index) {
+            <div class="tl-node" [style.animation-delay]="(i * 60) + 'ms'">
+              <!-- Dot -->
+              <div class="tl-dot" [style.background]="cfg(event.type).color" [style.border-color]="cfg(event.type).color">
+                <i class="fas {{ cfg(event.type).icon }}"></i>
+              </div>
+              <!-- Stem -->
+              <div class="tl-stem" [class.up]="i % 2 === 0" [class.down]="i % 2 !== 0"
+                   [style.background]="cfg(event.type).color + '40'"></div>
+              <!-- Card -->
+              <div class="tl-card" [class.up]="i % 2 === 0" [class.down]="i % 2 !== 0"
+                   [style.border-color]="cfg(event.type).color">
+                <div class="tl-card-date">{{ event.date }}</div>
+                <span class="tl-badge" [style.background]="cfg(event.type).color">
+                  <i class="fas {{ cfg(event.type).icon }}"></i> {{ cfg(event.type).label }}
+                </span>
+                <div class="tl-card-ref">{{ event.reference || event.subject || '' }}</div>
+                @if (event.fournisseur) {
+                  <div class="tl-card-sub">{{ event.fournisseur }}</div>
+                }
+                @if (event.montant) {
+                  <div class="tl-card-amount" [style.color]="cfg(event.type).color">{{ event.montant | number:'1.2-2' }} EUR</div>
+                }
+                @if (event.scenarioId) {
+                  <span class="tl-scenario">{{ event.scenarioId }}</span>
+                }
+                @if (event.type === 'email' && event.hasRelation !== null) {
+                  <span class="tl-relation" [class.yes]="event.hasRelation" [class.no]="!event.hasRelation">
+                    {{ event.hasRelation ? event.relationType : 'Pas de relation' }}
+                  </span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      @if (!filteredEvents().length) {
+        <div class="empty"><i class="fas fa-inbox"></i> Aucun evenement.</div>
+      }
+    </div>

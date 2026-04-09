@@ -1,0 +1,123 @@
+    <div class="page">
+      <h1>Rapprochement Bancaire</h1>
+
+      <div class="actions">
+        <button class="btn-primary" (click)="runAll()" [disabled]="running()">
+          @if (running()) {
+            <i class="fas fa-spinner fa-spin"></i> Analyse en cours...
+          } @else {
+            <i class="fas fa-play"></i> Lancer le rapprochement
+          }
+        </button>
+      </div>
+
+      <!-- Progress overlay -->
+      @if (running()) {
+        <div class="progress-overlay">
+          <div class="progress-card">
+            <div class="progress-header">
+              <div class="progress-icon">
+                <div class="pulse-ring"></div>
+                <div class="pulse-dot"></div>
+              </div>
+              <h3>Rapprochement en cours</h3>
+            </div>
+
+            <div class="progress-info">
+              <span class="progress-label">{{ progressCurrent() }} / {{ progressTotal() }} mouvements traites</span>
+              <span class="progress-percent">{{ progressPercent() }}%</span>
+            </div>
+
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" [style.width.%]="progressPercent()"></div>
+            </div>
+
+            @if (progressCurrentLabel()) {
+              <p class="progress-detail">{{ progressCurrentLabel() }}</p>
+            }
+
+            <div class="progress-stats">
+              <div class="stat exact">
+                <span class="stat-count">{{ statsExact() }}</span>
+                <span class="stat-label">Exact</span>
+              </div>
+              <div class="stat partial">
+                <span class="stat-count">{{ statsPartial() }}</span>
+                <span class="stat-label">Partiel</span>
+              </div>
+              <div class="stat no-match">
+                <span class="stat-count">{{ statsNoMatch() }}</span>
+                <span class="stat-label">Sans correspondance</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (error()) {
+        <div class="error-msg">{{ error() }}</div>
+      }
+
+      <div class="results">
+        @for (r of rapprochements(); track r.id) {
+          <div class="result-card" [class.exact]="r.status === 'exact'"
+               [class.partial]="r.status === 'partial'" [class.no-match]="r.status === 'no_match'">
+            <div class="result-header">
+              <span class="status-badge" [class]="r.status">
+                {{ r.status === 'exact' ? 'Correspondance exacte' : r.status === 'partial' ? 'Correspondance partielle' : 'Aucune correspondance' }}
+              </span>
+              <span class="ecart" *ngIf="r.ecart !== 0">Ecart: {{ r.ecart | number:'1.2-2' }} EUR</span>
+            </div>
+
+            <div class="result-body">
+              <div class="amounts">
+                <div class="amount-item">
+                  <span class="label">Mouvement:</span>
+                  <span class="value sortie">{{ r.montantMouvement | number:'1.2-2' }} EUR</span>
+                </div>
+                <div class="amount-item">
+                  <span class="label">Factures:</span>
+                  <span class="value">{{ r.montantFactures | number:'1.2-2' }} EUR</span>
+                </div>
+              </div>
+
+              <div class="ai-explanation">
+                <strong>Analyse IA:</strong>
+                <p>{{ r.aiExplanation }}</p>
+              </div>
+
+              @if (r.factureIds?.length) {
+                <div class="matched-factures">
+                  <strong>Factures associees:</strong>
+                  <span class="facture-id" *ngFor="let fid of r.factureIds">{{ fid | slice:0:8 }}...</span>
+                </div>
+              }
+
+              <div class="confirm-actions">
+                @if (r.confirmed) {
+                  <span class="confirmed-badge">Confirme</span>
+                } @else {
+                  <button class="btn-confirm" (click)="confirm(r.id)"><i class="fas fa-check"></i> Confirmer</button>
+                  <button class="btn-reject" (click)="reject(r.id)"><i class="fas fa-times"></i> Rejeter</button>
+                }
+              </div>
+            </div>
+          </div>
+        } @empty {
+          <div class="empty-state">
+            <div class="empty-svg">
+              <svg id="svg-rapp-empty" viewBox="0 0 200 200" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15,40 L75,35 L82,42 L82,120 L20,125 Z"/><path d="M75,35 L82,42 L75,40 Z"/>
+                <line x1="28" y1="58" x2="68" y2="55"/><line x1="28" y1="70" x2="62" y2="68"/><line x1="28" y1="82" x2="58" y2="80"/>
+                <path d="M118,40 L178,35 L185,42 L185,120 L123,125 Z"/><path d="M178,35 L185,42 L178,40 Z"/>
+                <line x1="130" y1="58" x2="172" y2="55"/><line x1="130" y1="70" x2="168" y2="68"/><line x1="130" y1="82" x2="162" y2="80"/>
+                <path d="M82,70 C95,65 105,65 118,70" stroke-width="2.5"/><path d="M82,90 C95,85 105,85 118,90" stroke-width="2.5"/>
+                <circle cx="100" cy="155" r="28"/><polyline points="87,155 96,165 115,143" stroke-width="4"/>
+              </svg>
+            </div>
+            <p>Aucun rapprochement effectue.</p>
+            <p>Importez des factures et des mouvements bancaires, puis lancez le rapprochement.</p>
+          </div>
+        }
+      </div>
+    </div>

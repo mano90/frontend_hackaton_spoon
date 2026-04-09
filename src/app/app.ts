@@ -16,7 +16,6 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
           <li><a routerLink="/dashboard" routerLinkActive="active"><i class="fas fa-tachometer-alt"></i> Tableau de bord</a></li>
           <li class="nav-section">Gestion</li>
           <li><a routerLink="/documents" routerLinkActive="active"><i class="fas fa-folder-open"></i> Documents</a></li>
-          <li><a routerLink="/factures" routerLinkActive="active"><i class="fas fa-file-invoice-dollar"></i> Factures</a></li>
           <li><a routerLink="/mouvements" routerLinkActive="active"><i class="fas fa-university"></i> Mouvements</a></li>
           <li><a routerLink="/rapprochement" routerLinkActive="active"><i class="fas fa-link"></i> Rapprochement</a></li>
           <li class="nav-section">Analyse</li>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Envelope body 3D -->
+  <path d="M20,60 L170,50 L180,60 L180,150 L30,160 Z" />
+  <path d="M170,50 L180,60 L170,58 Z" />
+  <!-- Flap -->
+  <path d="M20,60 L95,105 L170,50" />
+  <!-- Inner fold lines -->
+  <path d="M20,160 L75,115" stroke-dasharray="4,4" opacity="0.4" />
+  <path d="M180,150 L125,110" stroke-dasharray="4,4" opacity="0.4" />
+  <!-- Paper peeking out -->
+  <path d="M55,45 L145,38 L148,42 L148,85 L58,90 Z" opacity="0.4" />
+  <line x1="68" y1="55" x2="135" y2="50" opacity="0.4" />
+  <line x1="68" y1="65" x2="128" y2="60" opacity="0.4" />
+  <!-- @ symbol -->
+  <circle cx="100" cy="175" r="14" />
+  <path d="M107,168 C118,172 115,182 108,184 C101,186 96,180 97,175 C98,170 103,168 107,170 L107,182" />
+  <!-- Shadow -->
+  <path d="M30,160 L38,168 L188,158 L180,150" stroke-dasharray="4,4" opacity="0.3" />
+</svg>

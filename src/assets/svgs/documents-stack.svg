@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Back page -->
+  <path d="M55,20 L150,15 L160,25 L160,155 L60,160 Z" opacity="0.3" />
+  <!-- Middle page -->
+  <path d="M45,30 L140,25 L150,35 L150,165 L50,170 Z" opacity="0.5" />
+  <!-- Front page 3D -->
+  <path d="M35,40 L130,35 L140,45 L140,175 L40,180 Z" />
+  <path d="M130,35 L140,45 L130,43 Z" />
+  <!-- Content lines -->
+  <line x1="55" y1="65" x2="120" y2="62" />
+  <line x1="55" y1="80" x2="115" y2="77" />
+  <line x1="55" y1="95" x2="110" y2="92" />
+  <!-- Checkbox -->
+  <rect x="55" y="115" width="14" height="14" rx="3" transform="rotate(-1,62,122)" />
+  <polyline points="58,122 62,127 68,118" stroke-width="2.5" />
+  <line x1="78" y1="120" x2="120" y2="118" />
+  <!-- Checkbox 2 -->
+  <rect x="55" y="140" width="14" height="14" rx="3" transform="rotate(-1,62,147)" />
+  <polyline points="58,147 62,152 68,143" stroke-width="2.5" />
+  <line x1="78" y1="145" x2="115" y2="143" />
+  <!-- Shadow -->
+  <path d="M40,180 L48,188 L148,183 L140,175" stroke-dasharray="4,4" opacity="0.3" />
+</svg>

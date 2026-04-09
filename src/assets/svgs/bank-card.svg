@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="#8b5cf6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Card body 3D perspective -->
+  <path d="M20,55 L170,45 L180,55 L180,140 L30,150 Z" />
+  <path d="M170,45 L180,55 L170,53 Z" />
+  <!-- Magnetic stripe -->
+  <path d="M20,75 L170,67" stroke-width="8" opacity="0.3" />
+  <!-- Chip -->
+  <rect x="40" y="88" width="28" height="22" rx="4" transform="rotate(-1,54,99)" />
+  <line x1="46" y1="93" x2="46" y2="106" />
+  <line x1="54" y1="92" x2="54" y2="105" />
+  <line x1="62" y1="91" x2="62" y2="104" />
+  <!-- Card number dots -->
+  <circle cx="45" cy="125" r="2.5" fill="#8b5cf6" />
+  <circle cx="55" cy="124.5" r="2.5" fill="#8b5cf6" />
+  <circle cx="65" cy="124" r="2.5" fill="#8b5cf6" />
+  <circle cx="75" cy="123.5" r="2.5" fill="#8b5cf6" />
+  <circle cx="95" cy="123" r="2.5" fill="#8b5cf6" />
+  <circle cx="105" cy="122.5" r="2.5" fill="#8b5cf6" />
+  <circle cx="115" cy="122" r="2.5" fill="#8b5cf6" />
+  <circle cx="125" cy="121.5" r="2.5" fill="#8b5cf6" />
+  <!-- Contactless waves -->
+  <path d="M148,95 C155,90 158,100 155,105" />
+  <path d="M152,88 C162,82 168,98 162,108" />
+  <!-- Shadow -->
+  <path d="M30,150 L38,158 L188,148 L180,140" stroke-dasharray="4,4" opacity="0.3" />
+</svg>
