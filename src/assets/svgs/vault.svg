@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Vault body 3D -->
+  <path d="M30,35 L155,30 L170,45 L170,165 L45,170 Z" />
+  <path d="M155,30 L170,45 L155,43 Z" />
+  <!-- Side panel 3D depth -->
+  <line x1="170,45" x2="170" y1="45" y2="165" />
+  <!-- Door frame -->
+  <rect x="48" y="52" width="90" height="100" rx="6" transform="rotate(-0.5,93,102)" />
+  <!-- Lock dial -->
+  <circle cx="95" cy="100" r="25" />
+  <circle cx="95" cy="100" r="18" />
+  <line x1="95" y1="82" x2="95" y2="76" />
+  <line x1="95" y1="118" x2="95" y2="124" />
+  <line x1="77" y1="100" x2="71" y2="100" />
+  <line x1="113" y1="100" x2="119" y2="100" />
+  <!-- Dial pointer -->
+  <line x1="95" y1="100" x2="105" y2="88" stroke-width="2.5" />
+  <circle cx="95" cy="100" r="3" fill="#1e293b" />
+  <!-- Handle -->
+  <path d="M145,88 L152,88 L152,112 L145,112" stroke-width="4" />
+  <!-- Hinges -->
+  <circle cx="48" cy="68" r="4" fill="#1e293b" opacity="0.4" />
+  <circle cx="48" cy="135" r="4" fill="#1e293b" opacity="0.4" />
+  <!-- Shadow -->
+  <path d="M45,170 L55,180 L180,175 L170,165" stroke-dasharray="4,4" opacity="0.25" />
+  <!-- Coins stack -->
+  <ellipse cx="35" cy="182" rx="12" ry="4" />
+  <ellipse cx="35" cy="178" rx="12" ry="4" />
+  <ellipse cx="35" cy="174" rx="12" ry="4" />
+</svg>

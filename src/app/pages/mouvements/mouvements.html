@@ -1,0 +1,94 @@
+    <ngx-spinner name="mouvements" type="ball-clip-rotate" size="medium" color="#6366f1"></ngx-spinner>
+
+    <div class="page">
+      <h1>Mouvements Bancaires</h1>
+
+      <div class="add-form">
+        <h3>Ajouter un mouvement</h3>
+        <div class="form-row">
+          <div class="field">
+            <label>Libelle</label>
+            <input type="text" [(ngModel)]="form.libelle" placeholder="VIR Fournisseur - Description">
+          </div>
+          <div class="field">
+            <label>Reference</label>
+            <input type="text" [(ngModel)]="form.reference" placeholder="VIR-2026-XXX">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Montant (EUR)</label>
+            <input type="number" [(ngModel)]="form.montant" placeholder="0.00" step="0.01">
+          </div>
+          <div class="field">
+            <label>Date</label>
+            <input type="date" [(ngModel)]="form.date">
+          </div>
+          <div class="field">
+            <label>Type</label>
+            <select [(ngModel)]="form.type_mouvement">
+              <option value="sortie">Sortie</option>
+              <option value="entree">Entree</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-add" (click)="addMouvement()" [disabled]="!form.libelle || !form.montant || !form.date">
+            <i class="fas fa-plus"></i> Ajouter
+          </button>
+        </div>
+        @if (error()) {
+          <div class="error-msg">{{ error() }}</div>
+        }
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Libelle</th>
+              <th>Reference</th>
+              <th>Type</th>
+              <th>Montant</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of paged(); track m.id) {
+              <tr>
+                <td>{{ m.date }}</td>
+                <td>{{ m.libelle }}</td>
+                <td>{{ m.reference }}</td>
+                <td>
+                  <span class="badge" [class.entree]="m.type_mouvement === 'entree'"
+                        [class.sortie]="m.type_mouvement === 'sortie'">
+                    {{ m.type_mouvement === 'entree' ? 'Entree' : 'Sortie' }}
+                  </span>
+                </td>
+                <td class="montant" [class.entree-text]="m.type_mouvement === 'entree'"
+                    [class.sortie-text]="m.type_mouvement === 'sortie'">
+                  {{ m.montant | number:'1.2-2' }} EUR
+                </td>
+                <td>
+                  <button class="btn-delete" (click)="delete(m.id)" title="Supprimer"><i class="fas fa-trash-alt"></i></button>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="empty">Aucun mouvement enregistre</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button (click)="setPage(page() - 1)" [disabled]="page() === 1"><i class="fas fa-chevron-left"></i></button>
+          @for (p of pageNumbers(); track p) {
+            <button [class.active]="p === page()" (click)="setPage(p)">{{ p }}</button>
+          }
+          <button (click)="setPage(page() + 1)" [disabled]="page() === totalPages()"><i class="fas fa-chevron-right"></i></button>
+          <span class="page-info">{{ mouvements().length }} elements</span>
+        </div>
+      }
+    </div>

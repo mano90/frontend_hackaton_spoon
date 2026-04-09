@@ -32,6 +32,7 @@
     "@fortawesome/fontawesome-free": "^7.2.0",
     "ngx-spinner": "^19.0.0",
     "rxjs": "~7.8.0",
+    "sweetalert2": "^11.26.24",
     "tslib": "^2.3.0",
     "vivus": "^0.4.6"
   },

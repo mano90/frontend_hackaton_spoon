@@ -8,37 +8,32 @@ const BASE = 'http://localhost:3000/api';
 export class ApiService {
   private http = inject(HttpClient);
 
-  // Factures
-  uploadFacture(file: File): Observable<any> {
+  // Documents (all types: devis, bon_commande, bon_livraison, bon_reception, facture, email)
+  getDocuments(type?: string): Observable<any[]> {
+    const url = type ? `${BASE}/documents?type=${type}` : `${BASE}/documents`;
+    return this.http.get<any[]>(url);
+  }
+  uploadDocument(file: File, docType?: string): Observable<any> {
     const fd = new FormData();
     fd.append('file', file);
-    return this.http.post(`${BASE}/factures/upload`, fd);
+    if (docType) fd.append('docType', docType);
+    return this.http.post(`${BASE}/documents/upload`, fd);
   }
-  getFactures(): Observable<any[]> { return this.http.get<any[]>(`${BASE}/factures`); }
-  getFacturePdfUrl(id: string): string { return `${BASE}/factures/${id}/pdf`; }
-  confirmFacture(pendingId: string): Observable<any> { return this.http.post(`${BASE}/factures/confirm/${pendingId}`, {}); }
-  replaceFacture(pendingId: string, existingId: string): Observable<any> { return this.http.post(`${BASE}/factures/replace/${pendingId}/${existingId}`, {}); }
-  cancelPending(pendingId: string): Observable<any> { return this.http.delete(`${BASE}/factures/pending/${pendingId}`); }
-  deleteFacture(id: string): Observable<any> { return this.http.delete(`${BASE}/factures/${id}`); }
+  confirmDocument(pendingId: string, docType?: string): Observable<any> {
+    return this.http.post(`${BASE}/documents/confirm/${pendingId}`, docType ? { docType } : {});
+  }
+  replaceDocument(pendingId: string, existingId: string): Observable<any> {
+    return this.http.post(`${BASE}/documents/replace/${pendingId}/${existingId}`, {});
+  }
+  cancelPending(pendingId: string): Observable<any> { return this.http.delete(`${BASE}/documents/pending/${pendingId}`); }
+  getDocumentPdfUrl(id: string): string { return `${BASE}/documents/${id}/pdf`; }
+  getPendingPdfUrl(pendingId: string): string { return `${BASE}/documents/pending/${pendingId}/pdf`; }
+  deleteDocument(id: string): Observable<any> { return this.http.delete(`${BASE}/documents/${id}`); }
 
   // Mouvements
   createMouvement(data: any): Observable<any> { return this.http.post(`${BASE}/mouvements`, data); }
   getMouvements(): Observable<any[]> { return this.http.get<any[]>(`${BASE}/mouvements`); }
   deleteMouvement(id: string): Observable<any> { return this.http.delete(`${BASE}/mouvements/${id}`); }
-
-  // Documents (devis, bon_commande, bon_livraison, bon_reception, email — all in one collection)
-  getDocuments(type?: string): Observable<any[]> {
-    const url = type ? `${BASE}/documents?type=${type}` : `${BASE}/documents`;
-    return this.http.get<any[]>(url);
-  }
-  uploadDocument(file: File, docType: string): Observable<any> {
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('docType', docType);
-    return this.http.post(`${BASE}/documents/upload`, fd);
-  }
-  getDocumentPdfUrl(id: string): string { return `${BASE}/documents/${id}/pdf`; }
-  deleteDocument(id: string): Observable<any> { return this.http.delete(`${BASE}/documents/${id}`); }
 
   // Rapprochement
   getSortieIds(): Observable<{ ids: string[]; count: number }> { return this.http.get<{ ids: string[]; count: number }>(`${BASE}/rapprochement/sortie-ids`); }
