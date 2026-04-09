@@ -26,10 +26,19 @@ export class ApiService {
   getMouvements(): Observable<any[]> { return this.http.get<any[]>(`${BASE}/mouvements`); }
   deleteMouvement(id: string): Observable<any> { return this.http.delete(`${BASE}/mouvements/${id}`); }
 
-  // Generic documents (devis, bon_commande, bon_livraison, bon_reception, email)
-  getDocuments(docType: string): Observable<any[]> { return this.http.get<any[]>(`${BASE}/documents/${docType}`); }
-  getDocumentPdfUrl(docType: string, id: string): string { return `${BASE}/documents/${docType}/${id}/pdf`; }
-  deleteDocument(docType: string, id: string): Observable<any> { return this.http.delete(`${BASE}/documents/${docType}/${id}`); }
+  // Documents (devis, bon_commande, bon_livraison, bon_reception, email — all in one collection)
+  getDocuments(type?: string): Observable<any[]> {
+    const url = type ? `${BASE}/documents?type=${type}` : `${BASE}/documents`;
+    return this.http.get<any[]>(url);
+  }
+  uploadDocument(file: File, docType: string): Observable<any> {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('docType', docType);
+    return this.http.post(`${BASE}/documents/upload`, fd);
+  }
+  getDocumentPdfUrl(id: string): string { return `${BASE}/documents/${id}/pdf`; }
+  deleteDocument(id: string): Observable<any> { return this.http.delete(`${BASE}/documents/${id}`); }
 
   // Rapprochement
   getSortieIds(): Observable<{ ids: string[]; count: number }> { return this.http.get<{ ids: string[]; count: number }>(`${BASE}/rapprochement/sortie-ids`); }

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
@@ -66,7 +66,7 @@ import { ApiService } from '../../services/api.service';
             </tr>
           </thead>
           <tbody>
-            @for (m of mouvements(); track m.id) {
+            @for (m of paged(); track m.id) {
               <tr>
                 <td>{{ m.date }}</td>
                 <td>{{ m.libelle }}</td>
@@ -91,6 +91,17 @@ import { ApiService } from '../../services/api.service';
           </tbody>
         </table>
       </div>
+
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button (click)="setPage(page() - 1)" [disabled]="page() === 1"><i class="fas fa-chevron-left"></i></button>
+          @for (p of pageNumbers(); track p) {
+            <button [class.active]="p === page()" (click)="setPage(p)">{{ p }}</button>
+          }
+          <button (click)="setPage(page() + 1)" [disabled]="page() === totalPages()"><i class="fas fa-chevron-right"></i></button>
+          <span class="page-info">{{ mouvements().length }} elements</span>
+        </div>
+      }
     </div>
   `,
   styles: [`
@@ -131,6 +142,13 @@ import { ApiService } from '../../services/api.service';
     .empty { text-align: center; color: #94a3b8; padding: 2rem !important; }
     .btn-delete { background: #fee2e2; color: #dc2626; border: none; padding: 0.4rem 0.75rem; border-radius: 6px; cursor: pointer; }
     .btn-delete:hover { background: #fecaca; }
+
+    .pagination { display: flex; align-items: center; gap: 0.3rem; margin-top: 1rem; justify-content: center; }
+    .pagination button { padding: 0.4rem 0.7rem; border: 1px solid #e2e8f0; border-radius: 6px; background: white; cursor: pointer; font-size: 0.85rem; color: #475569; transition: all 0.15s; }
+    .pagination button:hover:not(:disabled) { border-color: #6366f1; color: #6366f1; }
+    .pagination button.active { background: #6366f1; color: white; border-color: #6366f1; }
+    .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .page-info { margin-left: 0.75rem; font-size: 0.8rem; color: #94a3b8; }
   `]
 })
 export class MouvementsComponent implements OnInit {
@@ -139,6 +157,16 @@ export class MouvementsComponent implements OnInit {
 
   mouvements = signal<any[]>([]);
   error = signal('');
+
+  page = signal(1);
+  pageSize = 10;
+  totalPages = computed(() => Math.max(1, Math.ceil(this.mouvements().length / this.pageSize)));
+  paged = computed(() => {
+    const start = (this.page() - 1) * this.pageSize;
+    return this.mouvements().slice(start, start + this.pageSize);
+  });
+  pageNumbers = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
+  setPage(p: number) { if (p >= 1 && p <= this.totalPages()) this.page.set(p); }
 
   form = {
     libelle: '',
@@ -153,7 +181,7 @@ export class MouvementsComponent implements OnInit {
   load() {
     this.spinner.show('mouvements');
     this.api.getMouvements().subscribe({
-      next: (data) => { this.mouvements.set(data); this.spinner.hide('mouvements'); },
+      next: (data) => { this.mouvements.set(data); this.page.set(1); this.spinner.hide('mouvements'); },
       error: () => this.spinner.hide('mouvements')
     });
   }

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
@@ -42,7 +42,7 @@ import { ApiService } from '../../services/api.service';
             </tr>
           </thead>
           <tbody>
-            @for (f of factures(); track f.id) {
+            @for (f of paged(); track f.id) {
               <tr>
                 <td>{{ f.fileName }}</td>
                 <td>{{ f.fournisseur }}</td>
@@ -60,6 +60,17 @@ import { ApiService } from '../../services/api.service';
           </tbody>
         </table>
       </div>
+
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button (click)="setPage(page() - 1)" [disabled]="page() === 1"><i class="fas fa-chevron-left"></i></button>
+          @for (p of pageNumbers(); track p) {
+            <button [class.active]="p === page()" (click)="setPage(p)">{{ p }}</button>
+          }
+          <button (click)="setPage(page() + 1)" [disabled]="page() === totalPages()"><i class="fas fa-chevron-right"></i></button>
+          <span class="page-info">{{ factures().length }} elements</span>
+        </div>
+      }
     </div>
 
     <!-- PDF Viewer Modal -->
@@ -141,6 +152,18 @@ import { ApiService } from '../../services/api.service';
     .montant { font-weight: 600; color: #6366f1; }
     .empty { text-align: center; color: #94a3b8; padding: 2rem !important; }
 
+    .pagination {
+      display: flex; align-items: center; gap: 0.3rem; margin-top: 1rem; justify-content: center;
+    }
+    .pagination button {
+      padding: 0.4rem 0.7rem; border: 1px solid #e2e8f0; border-radius: 6px; background: white;
+      cursor: pointer; font-size: 0.85rem; color: #475569; transition: all 0.15s;
+    }
+    .pagination button:hover:not(:disabled) { border-color: #6366f1; color: #6366f1; }
+    .pagination button.active { background: #6366f1; color: white; border-color: #6366f1; }
+    .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .page-info { margin-left: 0.75rem; font-size: 0.8rem; color: #94a3b8; }
+
     .actions { display: flex; gap: 0.5rem; }
     .btn-view { background: #eef2ff; color: #6366f1; border: none; padding: 0.4rem 0.75rem; border-radius: 6px; cursor: pointer; font-weight: 500; }
     .btn-view:hover { background: #e0e7ff; }
@@ -218,13 +241,23 @@ export class FacturesComponent implements OnInit {
   pdfName = signal('');
   duplicateInfo = signal<any>(null);
 
+  page = signal(1);
+  pageSize = 10;
+  totalPages = computed(() => Math.max(1, Math.ceil(this.factures().length / this.pageSize)));
+  paged = computed(() => {
+    const start = (this.page() - 1) * this.pageSize;
+    return this.factures().slice(start, start + this.pageSize);
+  });
+  pageNumbers = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
+  setPage(p: number) { if (p >= 1 && p <= this.totalPages()) this.page.set(p); }
+
   ngOnInit() { this.load(); }
 
   load() {
     this.spinnerMessage.set('Chargement des factures...');
     this.spinner.show('factures');
     this.api.getFactures().subscribe({
-      next: (data) => { this.factures.set(data); this.spinner.hide('factures'); },
+      next: (data) => { this.factures.set(data); this.page.set(1); this.spinner.hide('factures'); },
       error: () => this.spinner.hide('factures')
     });
   }
