@@ -1,39 +1,65 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
 import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'app-mouvements',
   standalone: true,
-  imports: [CommonModule, NgxSpinnerModule],
+  imports: [CommonModule, FormsModule, NgxSpinnerModule],
   template: `
     <ngx-spinner name="mouvements" type="ball-clip-rotate" size="medium" color="#6366f1"></ngx-spinner>
 
     <div class="page">
       <h1>Mouvements Bancaires</h1>
 
-      <div class="upload-zone" (drop)="onDrop($event)" (dragover)="$event.preventDefault()"
-           (click)="fileInput.click()">
-        <input #fileInput type="file" accept=".pdf" (change)="onFileSelect($event)" hidden>
-        <div class="upload-icon">🏦</div>
-        <p>Glissez votre relevé bancaire PDF ici ou cliquez pour sélectionner</p>
-        @if (uploading()) {
-          <div class="upload-progress">Extraction des mouvements par l'IA...</div>
+      <div class="add-form">
+        <h3>Ajouter un mouvement</h3>
+        <div class="form-row">
+          <div class="field">
+            <label>Libelle</label>
+            <input type="text" [(ngModel)]="form.libelle" placeholder="VIR Fournisseur - Description">
+          </div>
+          <div class="field">
+            <label>Reference</label>
+            <input type="text" [(ngModel)]="form.reference" placeholder="VIR-2026-XXX">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Montant (EUR)</label>
+            <input type="number" [(ngModel)]="form.montant" placeholder="0.00" step="0.01">
+          </div>
+          <div class="field">
+            <label>Date</label>
+            <input type="date" [(ngModel)]="form.date">
+          </div>
+          <div class="field">
+            <label>Type</label>
+            <select [(ngModel)]="form.type_mouvement">
+              <option value="sortie">Sortie</option>
+              <option value="entree">Entree</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-add" (click)="addMouvement()" [disabled]="!form.libelle || !form.montant || !form.date">
+            Ajouter
+          </button>
+        </div>
+        @if (error()) {
+          <div class="error-msg">{{ error() }}</div>
         }
       </div>
-
-      @if (error()) {
-        <div class="error-msg">{{ error() }}</div>
-      }
 
       <div class="table-container">
         <table>
           <thead>
             <tr>
               <th>Date</th>
-              <th>Libellé</th>
-              <th>Référence</th>
+              <th>Libelle</th>
+              <th>Reference</th>
               <th>Type</th>
               <th>Montant</th>
               <th>Actions</th>
@@ -48,19 +74,19 @@ import { ApiService } from '../../services/api.service';
                 <td>
                   <span class="badge" [class.entree]="m.type_mouvement === 'entree'"
                         [class.sortie]="m.type_mouvement === 'sortie'">
-                    {{ m.type_mouvement === 'entree' ? '↑ Entrée' : '↓ Sortie' }}
+                    {{ m.type_mouvement === 'entree' ? 'Entree' : 'Sortie' }}
                   </span>
                 </td>
                 <td class="montant" [class.entree-text]="m.type_mouvement === 'entree'"
                     [class.sortie-text]="m.type_mouvement === 'sortie'">
-                  {{ m.montant | number:'1.2-2' }} €
+                  {{ m.montant | number:'1.2-2' }} EUR
                 </td>
                 <td>
                   <button class="btn-delete" (click)="delete(m.id)">Supprimer</button>
                 </td>
               </tr>
             } @empty {
-              <tr><td colspan="6" class="empty">Aucun mouvement importé</td></tr>
+              <tr><td colspan="6" class="empty">Aucun mouvement enregistre</td></tr>
             }
           </tbody>
         </table>
@@ -71,14 +97,27 @@ import { ApiService } from '../../services/api.service';
     .page { padding: 2rem; max-width: 1200px; margin: 0 auto; }
     h1 { font-size: 1.8rem; margin-bottom: 1.5rem; color: #1e293b; }
 
-    .upload-zone {
-      border: 2px dashed #cbd5e1; border-radius: 12px; padding: 2rem; text-align: center;
-      cursor: pointer; transition: all 0.2s; margin-bottom: 2rem; background: #f8fafc;
+    .add-form {
+      background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    .upload-zone:hover { border-color: #6366f1; background: #eef2ff; }
-    .upload-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
-    .upload-progress { color: #6366f1; font-weight: 500; margin-top: 0.5rem; }
-    .error-msg { background: #fef2f2; color: #dc2626; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; }
+    .add-form h3 { margin: 0 0 1rem 0; font-size: 1.1rem; color: #334155; }
+    .form-row { display: flex; gap: 1rem; margin-bottom: 1rem; }
+    .field { flex: 1; display: flex; flex-direction: column; gap: 0.3rem; }
+    .field label { font-size: 0.8rem; font-weight: 600; color: #64748b; text-transform: uppercase; }
+    .field input, .field select {
+      padding: 0.6rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px;
+      font-size: 0.95rem; outline: none; transition: border-color 0.2s;
+    }
+    .field input:focus, .field select:focus { border-color: #6366f1; }
+    .form-actions { display: flex; justify-content: flex-end; }
+    .btn-add {
+      background: #6366f1; color: white; border: none; padding: 0.6rem 1.5rem;
+      border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem;
+    }
+    .btn-add:hover { background: #4f46e5; }
+    .btn-add:disabled { background: #cbd5e1; cursor: not-allowed; }
+    .error-msg { background: #fef2f2; color: #dc2626; padding: 0.75rem 1rem; border-radius: 8px; margin-top: 1rem; }
 
     .table-container { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -99,8 +138,15 @@ export class MouvementsComponent implements OnInit {
   private spinner = inject(NgxSpinnerService);
 
   mouvements = signal<any[]>([]);
-  uploading = signal(false);
   error = signal('');
+
+  form = {
+    libelle: '',
+    reference: '',
+    montant: null as number | null,
+    date: '',
+    type_mouvement: 'sortie',
+  };
 
   ngOnInit() { this.load(); }
 
@@ -112,22 +158,14 @@ export class MouvementsComponent implements OnInit {
     });
   }
 
-  onFileSelect(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files?.[0]) this.upload(input.files[0]);
-  }
-
-  onDrop(event: DragEvent) {
-    event.preventDefault();
-    if (event.dataTransfer?.files?.[0]) this.upload(event.dataTransfer.files[0]);
-  }
-
-  upload(file: File) {
-    this.uploading.set(true);
+  addMouvement() {
     this.error.set('');
-    this.api.uploadMouvement(file).subscribe({
-      next: () => { this.uploading.set(false); this.load(); },
-      error: (err) => { this.uploading.set(false); this.error.set(err.error?.error || 'Upload failed'); }
+    this.api.createMouvement(this.form).subscribe({
+      next: () => {
+        this.form = { libelle: '', reference: '', montant: null, date: '', type_mouvement: 'sortie' };
+        this.load();
+      },
+      error: (err) => this.error.set(err.error?.error || 'Erreur lors de la creation')
     });
   }
 

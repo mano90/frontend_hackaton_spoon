@@ -19,15 +19,29 @@ export class ApiService {
     return this.http.get<any[]>(`${BASE}/factures`);
   }
 
+  getFacturePdfUrl(id: string): string {
+    return `${BASE}/factures/${id}/pdf`;
+  }
+
+  confirmFacture(pendingId: string): Observable<any> {
+    return this.http.post(`${BASE}/factures/confirm/${pendingId}`, {});
+  }
+
+  replaceFacture(pendingId: string, existingId: string): Observable<any> {
+    return this.http.post(`${BASE}/factures/replace/${pendingId}/${existingId}`, {});
+  }
+
+  cancelPending(pendingId: string): Observable<any> {
+    return this.http.delete(`${BASE}/factures/pending/${pendingId}`);
+  }
+
   deleteFacture(id: string): Observable<any> {
     return this.http.delete(`${BASE}/factures/${id}`);
   }
 
   // Mouvements
-  uploadMouvement(file: File): Observable<any> {
-    const fd = new FormData();
-    fd.append('file', file);
-    return this.http.post(`${BASE}/mouvements/upload`, fd);
+  createMouvement(data: any): Observable<any> {
+    return this.http.post(`${BASE}/mouvements`, data);
   }
 
   getMouvements(): Observable<any[]> {
@@ -39,6 +53,10 @@ export class ApiService {
   }
 
   // Rapprochement
+  getSortieIds(): Observable<{ ids: string[]; count: number }> {
+    return this.http.get<{ ids: string[]; count: number }>(`${BASE}/rapprochement/sortie-ids`);
+  }
+
   runRapprochement(mouvementId: string): Observable<any> {
     return this.http.post(`${BASE}/rapprochement/run/${mouvementId}`, {});
   }
