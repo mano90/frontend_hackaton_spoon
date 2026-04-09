@@ -53,9 +53,13 @@
               }
             ],
             "styles": [
+              "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
               "node_modules/ngx-spinner/animations/ball-scale-multiple.css",
               "node_modules/ngx-spinner/animations/ball-clip-rotate.css",
               "src/styles.scss"
+            ],
+            "scripts": [
+              "node_modules/vivus/dist/vivus.min.js"
             ]
           },
           "configurations": {

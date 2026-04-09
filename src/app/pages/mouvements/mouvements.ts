@@ -45,7 +45,7 @@ import { ApiService } from '../../services/api.service';
         </div>
         <div class="form-actions">
           <button class="btn-add" (click)="addMouvement()" [disabled]="!form.libelle || !form.montant || !form.date">
-            Ajouter
+            <i class="fas fa-plus"></i> Ajouter
           </button>
         </div>
         @if (error()) {
@@ -82,7 +82,7 @@ import { ApiService } from '../../services/api.service';
                   {{ m.montant | number:'1.2-2' }} EUR
                 </td>
                 <td>
-                  <button class="btn-delete" (click)="delete(m.id)">Supprimer</button>
+                  <button class="btn-delete" (click)="delete(m.id)" title="Supprimer"><i class="fas fa-trash-alt"></i></button>
                 </td>
               </tr>
             } @empty {

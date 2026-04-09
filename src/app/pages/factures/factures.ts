@@ -50,8 +50,8 @@ import { ApiService } from '../../services/api.service';
                 <td>{{ f.date }}</td>
                 <td class="montant">{{ f.montant | number:'1.2-2' }} EUR</td>
                 <td class="actions">
-                  <button class="btn-view" (click)="viewPdf(f.id, f.fileName)">Voir PDF</button>
-                  <button class="btn-delete" (click)="delete(f.id)">Supprimer</button>
+                  <button class="btn-view" (click)="viewPdf(f.id, f.fileName)" title="Voir PDF"><i class="fas fa-file-pdf"></i></button>
+                  <button class="btn-delete" (click)="delete(f.id)" title="Supprimer"><i class="fas fa-trash-alt"></i></button>
                 </td>
               </tr>
             } @empty {
@@ -111,9 +111,9 @@ import { ApiService } from '../../services/api.service';
             </div>
 
             <div class="duplicate-actions">
-              <button class="btn-skip" (click)="skipDuplicate()">Annuler l'import</button>
-              <button class="btn-keep" (click)="keepBoth()">Garder les deux</button>
-              <button class="btn-replace" (click)="replaceExisting()">Remplacer l'existante</button>
+              <button class="btn-skip" (click)="skipDuplicate()"><i class="fas fa-times"></i> Annuler</button>
+              <button class="btn-keep" (click)="keepBoth()"><i class="fas fa-copy"></i> Garder les deux</button>
+              <button class="btn-replace" (click)="replaceExisting()"><i class="fas fa-exchange-alt"></i> Remplacer</button>
             </div>
           </div>
         </div>

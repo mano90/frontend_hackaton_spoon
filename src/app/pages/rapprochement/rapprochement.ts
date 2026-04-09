@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgxSpinnerModule } from 'ngx-spinner';
+import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../services/api.service';
 
 @Component({
@@ -13,7 +14,11 @@ import { ApiService } from '../../services/api.service';
 
       <div class="actions">
         <button class="btn-primary" (click)="runAll()" [disabled]="running()">
-          {{ running() ? 'Analyse en cours...' : 'Lancer le rapprochement automatique' }}
+          @if (running()) {
+            <i class="fas fa-spinner fa-spin"></i> Analyse en cours...
+          } @else {
+            <i class="fas fa-play"></i> Lancer le rapprochement
+          }
         </button>
       </div>
 
@@ -98,6 +103,15 @@ import { ApiService } from '../../services/api.service';
                   <span class="facture-id" *ngFor="let fid of r.factureIds">{{ fid | slice:0:8 }}...</span>
                 </div>
               }
+
+              <div class="confirm-actions">
+                @if (r.confirmed) {
+                  <span class="confirmed-badge">Confirme</span>
+                } @else {
+                  <button class="btn-confirm" (click)="confirm(r.id)"><i class="fas fa-check"></i> Confirmer</button>
+                  <button class="btn-reject" (click)="reject(r.id)"><i class="fas fa-times"></i> Rejeter</button>
+                }
+              </div>
             </div>
           </div>
         } @empty {
@@ -214,6 +228,13 @@ import { ApiService } from '../../services/api.service';
 
     .empty-state { text-align: center; padding: 3rem; color: #94a3b8; background: white; border-radius: 12px; }
 
+    .confirm-actions { display: flex; gap: 0.5rem; margin-top: 1rem; align-items: center; }
+    .btn-confirm { background: #dcfce7; color: #16a34a; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .btn-confirm:hover { background: #bbf7d0; }
+    .btn-reject { background: #fee2e2; color: #dc2626; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .btn-reject:hover { background: #fecaca; }
+    .confirmed-badge { background: #dcfce7; color: #16a34a; padding: 0.4rem 0.75rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; }
+
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   `]
 })
@@ -245,6 +266,14 @@ export class RapprochementComponent implements OnInit {
     });
   }
 
+  confirm(id: string) {
+    this.api.confirmRapprochement(id).subscribe(() => this.load());
+  }
+
+  reject(id: string) {
+    this.api.deleteRapprochement(id).subscribe(() => this.load());
+  }
+
   async runAll() {
     this.running.set(true);
     this.error.set('');
@@ -256,7 +285,7 @@ export class RapprochementComponent implements OnInit {
 
     try {
       // Get all sortie mouvement IDs
-      const { ids } = await this.api.getSortieIds().toPromise() as { ids: string[]; count: number };
+      const { ids } = await firstValueFrom(this.api.getSortieIds());
       this.progressTotal.set(ids.length);
 
       if (ids.length === 0) {
@@ -269,7 +298,7 @@ export class RapprochementComponent implements OnInit {
       for (let i = 0; i < ids.length; i++) {
         this.progressCurrentLabel.set(`Analyse du mouvement ${i + 1} / ${ids.length}...`);
         try {
-          const res = await this.api.runRapprochement(ids[i]).toPromise();
+          const res = await firstValueFrom(this.api.runRapprochement(ids[i]));
           if (res?.rapprochement) {
             const status = res.rapprochement.status;
             if (status === 'exact') this.statsExact.update(v => v + 1);
