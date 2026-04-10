@@ -4,6 +4,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
 import Swal from 'sweetalert2';
 import { ApiService } from '../../services/api.service';
+import { LayoutService } from '../../services/layout.service';
 
 declare const Vivus: any;
 
@@ -28,6 +29,7 @@ export class DocumentsComponent implements OnInit, AfterViewInit {
   private api = inject(ApiService);
   private spinner = inject(NgxSpinnerService);
   private sanitizer = inject(DomSanitizer);
+  private layout = inject(LayoutService);
 
   tabs = TABS;
   allDocuments = signal<any[]>([]);
@@ -205,6 +207,7 @@ export class DocumentsComponent implements OnInit, AfterViewInit {
   }
 
   viewPdf(id: string) {
+    this.layout.collapseSidebar();
     const doc = this.allDocuments().find(d => d.id === id);
     this.pdfDocName.set(doc?.reference || doc?.subject || doc?.fileName || 'Document');
     const url = this.api.getDocumentPdfUrl(id);
