@@ -3,7 +3,7 @@
       <p style="color:white;font-weight:500;margin-top:1rem">{{ spinnerMsg() }}</p>
     </ngx-spinner>
 
-    <div class="page">
+    <div class="page" [class.pdf-open]="!!pdfUrl()">
       <h1><i class="fas fa-folder-open"></i> Documents</h1>
 
       <!-- Upload zone — NO type selector, AI classifies automatically -->
