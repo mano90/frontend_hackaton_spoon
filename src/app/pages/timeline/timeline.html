@@ -1,13 +1,14 @@
-    <div class="page">
+    <div class="page" [class.page--tl-expanded]="timelineExpanded()">
       <h1><i class="fas fa-stream"></i> Timeline</h1>
+      <p class="tl-subtitle">Parcours d’un achat : commande → livraison / réception → facture → paiement.</p>
 
       <div class="filters">
         <div class="filter-group">
-          <label><i class="fas fa-filter"></i> Scenario</label>
+          <label><i class="fas fa-shopping-cart"></i> Parcours d’achat</label>
           <select [(ngModel)]="selectedScenario" (ngModelChange)="load()">
-            <option value="">Tous</option>
-            @for (s of scenarioIds(); track s) {
-              <option [value]="s">{{ s }}</option>
+            <option value="">Tous les parcours</option>
+            @for (o of scenarioOptions(); track o.id) {
+              <option [value]="o.id">{{ o.label }}</option>
             }
           </select>
         </div>
@@ -24,6 +25,16 @@
             <option value="email">Email</option>
           </select>
         </div>
+        <button
+          type="button"
+          class="btn-tl-view-expand"
+          (click)="toggleTimelineExpanded()"
+          [attr.aria-pressed]="timelineExpanded()"
+          title="Agrandir ou réduire la zone de la frise"
+        >
+          <i class="fas" [class.fa-compress-arrows-alt]="timelineExpanded()" [class.fa-expand-arrows-alt]="!timelineExpanded()"></i>
+          <span>{{ timelineExpanded() ? 'Réduire la frise' : 'Agrandir la frise' }}</span>
+        </button>
         <span class="event-count"><i class="fas fa-chart-bar"></i> {{ filteredEvents().length }} evenements</span>
       </div>
 
@@ -34,7 +45,12 @@
           <div class="tl-line"></div>
 
           @for (event of filteredEvents(); track event.id; let i = $index) {
-            <div class="tl-node" [style.animation-delay]="(i * 60) + 'ms'">
+            <div
+              class="tl-node"
+              [class.tl-node--focused]="highlightedEventId() === event.id"
+              [attr.id]="'tl-focus-' + event.id"
+              [style.animation-delay]="(i * 60) + 'ms'"
+            >
               <!-- Dot -->
               <div class="tl-dot" [style.background]="cfg(event.type).color" [style.border-color]="cfg(event.type).color">
                 <i class="fas {{ cfg(event.type).icon }}"></i>
@@ -43,8 +59,16 @@
               <div class="tl-stem" [class.up]="i % 2 === 0" [class.down]="i % 2 !== 0"
                    [style.background]="cfg(event.type).color + '40'"></div>
               <!-- Card -->
-              <div class="tl-card" [class.up]="i % 2 === 0" [class.down]="i % 2 !== 0"
-                   [style.border-color]="cfg(event.type).color">
+              <div
+                class="tl-card"
+                [class.up]="i % 2 === 0"
+                [class.down]="i % 2 !== 0"
+                [style.border-color]="cfg(event.type).color"
+                (click)="openDetail(event)"
+                role="button"
+                tabindex="0"
+                (keydown.enter)="openDetail(event)"
+              >
                 <div class="tl-card-date">{{ event.date }}</div>
                 <span class="tl-badge" [style.background]="cfg(event.type).color">
                   <i class="fas {{ cfg(event.type).icon }}"></i> {{ cfg(event.type).label }}
@@ -56,14 +80,33 @@
                 @if (event.montant) {
                   <div class="tl-card-amount" [style.color]="cfg(event.type).color">{{ event.montant | number:'1.2-2' }} EUR</div>
                 }
-                @if (event.scenarioId) {
-                  <span class="tl-scenario">{{ event.scenarioId }}</span>
-                }
                 @if (event.type === 'email' && event.hasRelation !== null) {
                   <span class="tl-relation" [class.yes]="event.hasRelation" [class.no]="!event.hasRelation">
                     {{ event.hasRelation ? event.relationType : 'Pas de relation' }}
                   </span>
                 }
+                <div class="tl-card-actions" (click)="stopCardClick($event)">
+                  @if (isDocumentLike(event)) {
+                    <button
+                      type="button"
+                      class="tl-card-icon"
+                      (click)="openPdfFromCard(event, $event)"
+                      title="Voir le PDF dans le panneau"
+                      aria-label="Voir le PDF dans le panneau"
+                    >
+                      <i class="fas fa-file-pdf"></i>
+                    </button>
+                  }
+                  <button
+                    type="button"
+                    class="tl-card-icon tl-card-icon--open"
+                    (click)="openDetailMaximized(event, $event)"
+                    title="Détails agrandis dans la page"
+                    aria-label="Agrandir les détails"
+                  >
+                    <i class="fas fa-expand-alt"></i>
+                  </button>
+                </div>
               </div>
             </div>
           }
@@ -72,5 +115,105 @@
 
       @if (!filteredEvents().length) {
         <div class="empty"><i class="fas fa-inbox"></i> Aucun evenement.</div>
+      }
+
+      @if (detailEvent(); as ev) {
+        <div class="tl-detail-layer">
+          <div class="tl-detail-backdrop" (click)="closeDetail()"></div>
+          <aside
+            class="tl-detail-panel"
+            [class.tl-detail-panel--max]="detailMaximized()"
+            (click)="$event.stopPropagation()"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tl-detail-title"
+          >
+            <header class="tl-detail-head">
+              <h2 id="tl-detail-title">
+                <i class="fas {{ cfg(ev.type).icon }}" [style.color]="cfg(ev.type).color"></i>
+                {{ cfg(ev.type).label }}
+              </h2>
+              <div class="tl-detail-toolbar">
+                @if (isDocumentLike(ev)) {
+                  <button
+                    type="button"
+                    class="tl-detail-icon-btn tl-detail-icon-btn--pdf"
+                    [class.is-active]="showPdfInline()"
+                    (click)="togglePdfInline()"
+                    [title]="showPdfInline() ? 'Masquer le PDF' : 'Afficher le PDF dans le panneau'"
+                  >
+                    <i class="fas fa-file-pdf"></i>
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="tl-detail-icon-btn"
+                  (click)="toggleDetailMaximized()"
+                  [title]="detailMaximized() ? 'Réduire le panneau' : 'Agrandir le panneau'"
+                >
+                  <i class="fas" [class.fa-compress]="detailMaximized()" [class.fa-expand-alt]="!detailMaximized()"></i>
+                </button>
+                <button type="button" class="tl-detail-icon-btn" (click)="closeDetail()" title="Fermer">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </header>
+            <div
+              class="tl-detail-body"
+              [class.tl-detail-body--pdf-open]="showPdfInline() && isDocumentLike(ev)"
+              [class.tl-detail-body--pdf-side]="showPdfInline() && isDocumentLike(ev) && detailMaximized()"
+            >
+              <div class="tl-detail-info">
+                <dl class="tl-detail-dl">
+                  <dt>Date</dt>
+                  <dd>{{ ev.date || '—' }}</dd>
+                  <dt>Référence / libellé</dt>
+                  <dd>{{ ev.reference || ev.subject || ev.libelle || '—' }}</dd>
+                  @if (ev.fournisseur) {
+                    <dt>Fournisseur</dt>
+                    <dd>{{ ev.fournisseur }}</dd>
+                  }
+                  @if (ev.montant != null && ev.montant !== '') {
+                    <dt>Montant</dt>
+                    <dd>{{ $any(ev.montant) | number: '1.2-2' }} EUR</dd>
+                  }
+                  @if (ev.scenarioId) {
+                    <dt class="tl-meta-muted">Réf. dossier (interne)</dt>
+                    <dd class="tl-meta-muted"><code>{{ ev.scenarioId }}</code></dd>
+                  }
+                  @if (ev.fileName) {
+                    <dt>Fichier</dt>
+                    <dd class="tl-detail-file">{{ ev.fileName }}</dd>
+                  }
+                  <dt>Identifiant</dt>
+                  <dd><code>{{ ev.id }}</code></dd>
+                </dl>
+                @if (isDocumentLike(ev)) {
+                  @if (!showPdfInline()) {
+                    <button type="button" class="tl-btn-open-pdf" (click)="showPdfInPanel()">
+                      <i class="fas fa-file-pdf"></i> Voir le document PDF
+                    </button>
+                  } @else {
+                    <button type="button" class="tl-btn-hide-pdf" (click)="togglePdfInline()">
+                      <i class="fas fa-chevron-left"></i> Masquer le PDF
+                    </button>
+                  }
+                }
+              </div>
+              @if (showPdfInline() && isDocumentLike(ev)) {
+                <div class="tl-detail-pdf">
+                  <ngx-extended-pdf-viewer
+                    [src]="pdfSrc(ev.id)"
+                    [height]="'100%'"
+                    [language]="'fr-FR'"
+                    [textLayer]="true"
+                    [showToolbar]="true"
+                    [sidebarVisible]="true"
+                  />
+                </div>
+              }
+            </div>
+          </aside>
+        </div>
       }
     </div>
