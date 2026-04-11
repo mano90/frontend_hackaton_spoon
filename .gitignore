@@ -41,3 +41,5 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Ne pas ignorer les PDF d’assets si vous les versionnez (aucune règle *.pdf par défaut).
