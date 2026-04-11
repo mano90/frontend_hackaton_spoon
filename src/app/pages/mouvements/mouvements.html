@@ -3,6 +3,21 @@
     <div class="page">
       <h1>Mouvements Bancaires</h1>
 
+      <div class="csv-import">
+        <h3><i class="fas fa-file-csv"></i> Importer un CSV</h3>
+        <p class="csv-hint">Fichier UTF-8 avec colonnes du type : date ; montant ; libellé (séparateur <code>;</code> ou <code>,</code>).</p>
+        <input
+          #csvInput
+          type="file"
+          accept=".csv,.txt,text/csv"
+          (change)="onCsvSelect($event)"
+          hidden
+        />
+        <button type="button" class="btn-csv" (click)="csvInput.click()">
+          <i class="fas fa-upload"></i> Choisir un CSV
+        </button>
+      </div>
+
       <div class="add-form">
         <h3>Ajouter un mouvement</h3>
         <div class="form-row">

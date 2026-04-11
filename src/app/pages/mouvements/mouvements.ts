@@ -60,4 +60,26 @@ export class MouvementsComponent implements OnInit {
   delete(id: string) {
     this.api.deleteMouvement(id).subscribe(() => this.load());
   }
+
+  onCsvSelect(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    this.error.set('');
+    this.spinner.show('mouvements');
+    this.api.importMouvementsCsv(file).subscribe({
+      next: (res) => {
+        this.spinner.hide('mouvements');
+        this.load();
+        const w = res.warnings?.length ? ` (${res.warnings.length} ligne(s) ignorée(s))` : '';
+        alert(`Import : ${res.count} mouvement(s) ajouté(s)${w}.`);
+      },
+      error: (err) => {
+        this.spinner.hide('mouvements');
+        const msg = err.error?.error || err.error?.parseErrors?.join?.('\n') || 'Import CSV échoué';
+        this.error.set(typeof msg === 'string' ? msg : JSON.stringify(err.error));
+      },
+    });
+  }
 }
