@@ -52,6 +52,25 @@ export class ApiService {
     if (docType) fd.append('docType', docType);
     return this.http.post(`${BASE}/documents/upload`, fd);
   }
+  /** Plusieurs PDF : multer + extraction + classifieur + regroupement dossiers (scenarioId) côté serveur */
+  uploadDocumentsBatch(files: File[], docType?: string): Observable<{
+    success: boolean;
+    fileCount: number;
+    results: unknown[];
+    dossiers?: { scenarioId: string; documentIds: string[] }[];
+  }> {
+    const fd = new FormData();
+    for (const f of files) {
+      fd.append('files', f, f.name);
+    }
+    if (docType) fd.append('docType', docType);
+    return this.http.post<{
+      success: boolean;
+      fileCount: number;
+      results: unknown[];
+      dossiers?: { scenarioId: string; documentIds: string[] }[];
+    }>(`${BASE}/documents/upload-batch`, fd);
+  }
   confirmDocument(pendingId: string, docType?: string): Observable<any> {
     return this.http.post(`${BASE}/documents/confirm/${pendingId}`, docType ? { docType } : {});
   }
@@ -67,6 +86,24 @@ export class ApiService {
   createMouvement(data: any): Observable<any> { return this.http.post(`${BASE}/mouvements`, data); }
   getMouvements(): Observable<any[]> { return this.http.get<any[]>(`${BASE}/mouvements`); }
   deleteMouvement(id: string): Observable<any> { return this.http.delete(`${BASE}/mouvements/${id}`); }
+  /** Import CSV relevé bancaire (champ file) — détection séparateur et colonnes */
+  importMouvementsCsv(file: File): Observable<{
+    success: boolean;
+    count: number;
+    mouvements: unknown[];
+    warnings?: string[];
+    headersDetected?: string[];
+  }> {
+    const fd = new FormData();
+    fd.append('file', file, file.name);
+    return this.http.post<{
+      success: boolean;
+      count: number;
+      mouvements: unknown[];
+      warnings?: string[];
+      headersDetected?: string[];
+    }>(`${BASE}/mouvements/import-csv`, fd);
+  }
 
   // Rapprochement
   getSortieIds(): Observable<{ ids: string[]; count: number }> { return this.http.get<{ ids: string[]; count: number }>(`${BASE}/rapprochement/sortie-ids`); }

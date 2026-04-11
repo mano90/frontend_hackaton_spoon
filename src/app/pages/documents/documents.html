@@ -146,7 +146,16 @@
           <span class="slide-title"><i class="fas fa-file-pdf"></i> {{ pdfDocName() }}</span>
           <button class="slide-close" (click)="closePdf()"><i class="fas fa-times"></i></button>
         </div>
-        <iframe [src]="pdfUrl()" class="slide-frame"></iframe>
+        <div class="slide-viewer">
+          <ngx-extended-pdf-viewer
+            [src]="pdfUrl()!"
+            [height]="'100%'"
+            [language]="'fr-FR'"
+            [textLayer]="true"
+            [showToolbar]="true"
+            [sidebarVisible]="true"
+          />
+        </div>
       </div>
     }
 
@@ -164,8 +173,17 @@
             </div>
 
             <!-- PDF preview -->
-            @if (pendingPdfUrl()) {
-              <iframe [src]="pendingPdfUrl()" class="classify-pdf-preview"></iframe>
+            @if (pendingPdfUrl(); as pendingSrc) {
+              <div class="classify-pdf-preview">
+                <ngx-extended-pdf-viewer
+                  [src]="pendingSrc"
+                  [height]="'250px'"
+                  [language]="'fr-FR'"
+                  [textLayer]="true"
+                  [showToolbar]="false"
+                  [sidebarVisible]="false"
+                />
+              </div>
             }
 
             <p class="classify-question">Dans quel type souhaitez-vous classer ce document ?</p>

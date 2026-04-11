@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
+import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 import Swal from 'sweetalert2';
 import { ApiService } from '../../services/api.service';
 import { LayoutService } from '../../services/layout.service';
@@ -21,14 +21,13 @@ const TABS = [
 @Component({
   selector: 'app-documents',
   standalone: true,
-  imports: [CommonModule, NgxSpinnerModule],
+  imports: [CommonModule, NgxSpinnerModule, NgxExtendedPdfViewerModule],
   templateUrl: './documents.html',
   styleUrl: './documents.scss'
 })
 export class DocumentsComponent implements OnInit, AfterViewInit {
   private api = inject(ApiService);
   private spinner = inject(NgxSpinnerService);
-  private sanitizer = inject(DomSanitizer);
   private layout = inject(LayoutService);
 
   tabs = TABS;
@@ -36,11 +35,11 @@ export class DocumentsComponent implements OnInit, AfterViewInit {
   activeTab = signal('');
   error = signal('');
   spinnerMsg = signal('Chargement...');
-  pdfUrl = signal<SafeResourceUrl | null>(null);
+  pdfUrl = signal<string | null>(null);
   pdfDocName = signal('');
   classifyInfo = signal<any>(null);
   duplicateInfo = signal<any>(null);
-  pendingPdfUrl = signal<SafeResourceUrl | null>(null);
+  pendingPdfUrl = signal<string | null>(null);
 
   page = signal(1);
   pageSize = 10;
@@ -110,12 +109,54 @@ export class DocumentsComponent implements OnInit, AfterViewInit {
 
   onFileSelect(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (input.files) { Array.from(input.files).forEach(f => this.upload(f)); input.value = ''; }
+    if (!input.files?.length) return;
+    const pdfs = Array.from(input.files).filter((f) => f.name.toLowerCase().endsWith('.pdf'));
+    input.value = '';
+    if (!pdfs.length) return;
+    if (pdfs.length === 1) this.upload(pdfs[0]);
+    else this.uploadBatch(pdfs);
   }
 
   onDrop(event: DragEvent) {
     event.preventDefault();
-    if (event.dataTransfer?.files) { Array.from(event.dataTransfer.files).forEach(f => this.upload(f)); }
+    if (!event.dataTransfer?.files?.length) return;
+    const pdfs = Array.from(event.dataTransfer.files).filter((f) => f.name.toLowerCase().endsWith('.pdf'));
+    if (!pdfs.length) return;
+    if (pdfs.length === 1) this.upload(pdfs[0]);
+    else this.uploadBatch(pdfs);
+  }
+
+  /** Plusieurs PDF : endpoint upload-batch (multer + agents + liaison scenarioId) */
+  uploadBatch(files: File[]) {
+    this.error.set('');
+    this.spinnerMsg.set('Import multiple : extraction, classification et liaison des dossiers...');
+    this.spinner.show('documents');
+    this.api.uploadDocumentsBatch(files).subscribe({
+      next: (res) => {
+        this.spinner.hide('documents');
+        const saved = (res.results as { outcome?: string }[])?.filter((r) => r.outcome === 'saved').length ?? 0;
+        const dossiers = res.dossiers?.length ?? 0;
+        const pending = (res.results as { outcome?: string }[])?.filter(
+          (r) => r.outcome === 'pending_classification' || r.outcome === 'pending_duplicate'
+        ).length ?? 0;
+        Swal.fire({
+          icon: 'success',
+          title: 'Import terminé',
+          html: `<p>${saved} document(s) enregistré(s).</p>${dossiers ? `<p>${dossiers} dossier(s) relié(s).</p>` : ''}${pending ? `<p>${pending} pièce(s) en attente de confirmation.</p>` : ''}`,
+          timer: 4500,
+          showConfirmButton: false,
+          toast: true,
+          position: 'top-end',
+        });
+        this.load();
+      },
+      error: (err) => {
+        this.spinner.hide('documents');
+        const msg = err.error?.error || 'Import multiple échoué';
+        this.error.set(msg);
+        Swal.fire({ icon: 'error', title: 'Erreur', text: msg, toast: true, position: 'top-end', timer: 4000, showConfirmButton: false });
+      },
+    });
   }
 
   upload(file: File) {
@@ -129,7 +170,7 @@ export class DocumentsComponent implements OnInit, AfterViewInit {
         if (res.needsClassification) {
           this.classifyInfo.set(res);
           const url = this.api.getPendingPdfUrl(res.pendingDocument.id);
-          this.pendingPdfUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
+          this.pendingPdfUrl.set(url);
         } else if (res.needsConfirmation) {
           this.duplicateInfo.set(res);
         } else {
@@ -211,7 +252,7 @@ export class DocumentsComponent implements OnInit, AfterViewInit {
     const doc = this.allDocuments().find(d => d.id === id);
     this.pdfDocName.set(doc?.reference || doc?.subject || doc?.fileName || 'Document');
     const url = this.api.getDocumentPdfUrl(id);
-    this.pdfUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
+    this.pdfUrl.set(url);
   }
   closePdf() { this.pdfUrl.set(null); this.pdfDocName.set(''); }
 

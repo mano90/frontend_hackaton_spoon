@@ -91,7 +91,19 @@
       width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
     }
     .slide-close:hover { background: #f1f5f9; color: #1e293b; }
-    .slide-frame { flex: 1; border: none; width: 100%; }
+    .slide-viewer {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #525659;
+    }
+    .slide-viewer ngx-extended-pdf-viewer {
+      flex: 1;
+      min-height: 0;
+      display: block;
+    }
 
     /* Modals (for classification/duplicate) */
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1001; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.15s ease; }
@@ -104,7 +116,15 @@
     .classify-alert { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; text-align: center; }
     .classify-alert p { margin: 0.25rem 0; color: #92400e; }
     .confidence { margin-top: 0.5rem !important; }
-    .classify-pdf-preview { width: 100%; height: 250px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 1rem; }
+    .classify-pdf-preview {
+      width: 100%;
+      height: 250px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+      background: #525659;
+    }
     .classify-question { font-weight: 600; color: #334155; margin-bottom: 0.75rem; }
 
     .classify-types { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1.25rem; }
