@@ -1,56 +1,321 @@
-    <ngx-spinner name="query" type="ball-clip-rotate" size="medium" color="#8b5cf6"></ngx-spinner>
+@if (modalSource(); as src) {
+  <div class="modal-backdrop" (click)="closeModal()" role="presentation">
+    <div class="modal-panel" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="modal-source-title">
+      <header class="modal-head">
+        <h2 id="modal-source-title">{{ src.label }}</h2>
+        <button type="button" class="modal-close" (click)="closeModal()" aria-label="Fermer">×</button>
+      </header>
 
-    <div class="page">
-      <div class="header-row">
-        <div>
-          <h1><i class="fas fa-robot"></i> Assistant IA</h1>
-          <p class="subtitle">Posez des questions sur vos factures et mouvements bancaires</p>
-        </div>
-        <div class="header-svg">
-          <svg id="svg-query-brain" viewBox="0 0 200 200" fill="none" stroke="#6366f1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M60,50 C40,50 25,65 28,85 C20,90 18,108 30,118 C28,135 40,150 60,148 C70,158 90,160 100,152 C110,160 130,158 140,148 C160,150 172,135 170,118 C182,108 180,90 172,85 C175,65 160,50 140,50 C130,42 110,40 100,48 C90,40 70,42 60,50 Z"/>
-            <path d="M100,48 C100,60 98,80 100,100 C102,120 100,140 100,152" stroke-dasharray="5,5"/>
-            <path d="M45,75 C55,70 65,78 60,85"/><path d="M35,100 C48,95 58,102 50,110"/><path d="M50,125 C60,120 72,128 65,135"/>
-            <path d="M155,75 C145,70 135,78 140,85"/><path d="M165,100 C152,95 142,102 150,110"/><path d="M150,125 C140,120 128,128 135,135"/>
-            <circle cx="70" cy="80" r="4" fill="#6366f1" opacity="0.5"/><circle cx="130" cy="80" r="4" fill="#6366f1" opacity="0.5"/>
-            <circle cx="55" cy="108" r="4" fill="#6366f1" opacity="0.5"/><circle cx="145" cy="108" r="4" fill="#6366f1" opacity="0.5"/>
-            <path d="M160,35 L165,25 L170,35 L180,38 L170,42 L165,52 L160,42 L150,38 Z" stroke-width="2"/>
-            <line x1="80" y1="170" x2="80" y2="185" stroke-width="2"/><line x1="100" y1="168" x2="100" y2="185" stroke-width="2"/><line x1="120" y1="170" x2="120" y2="185" stroke-width="2"/>
-            <line x1="70" y1="185" x2="130" y2="185" stroke-width="2"/>
-          </svg>
-        </div>
-      </div>
-
-      <div class="query-box">
-        <textarea [(ngModel)]="queryText" placeholder="Ex: Quelles factures correspondent à la sortie de 1500€ du 15 mars ?"
-                  rows="3" (keydown.control.enter)="ask()"></textarea>
-        <button class="btn-ask" (click)="ask()" [disabled]="loading() || !queryText.trim()">
-          {{ loading() ? 'Réflexion en cours...' : 'Demander' }}
-        </button>
-      </div>
-
-      <div class="history">
-        @for (item of history(); track $index) {
-          <div class="chat-item">
-            <div class="question">
-              <span class="avatar user">👤</span>
-              <p>{{ item.question }}</p>
-            </div>
-            <div class="answer">
-              <span class="avatar ai">🤖</span>
-              <div>
-                <p>{{ item.answer }}</p>
-                @if (item.sources.length) {
-                  <div class="sources">
-                    <strong>Sources:</strong>
-                    @for (s of item.sources; track s) {
-                      <span class="source-tag">{{ s | slice:0:8 }}...</span>
-                    }
-                  </div>
+      <div class="modal-body">
+        @switch (src.kind) {
+          @case ('document') {
+            @if (documentDetailLoading()) {
+              <p class="modal-muted">Chargement du document…</p>
+            } @else if (documentDetail(); as doc) {
+              <dl class="modal-dl modal-doc-detail">
+                <dt>Type</dt>
+                <dd>{{ doc['docType'] || doc['type'] || '—' }}</dd>
+                <dt>Référence / objet</dt>
+                <dd>{{ doc['reference'] || doc['subject'] || '—' }}</dd>
+                <dt>Date</dt>
+                <dd>{{ doc['date'] || '—' }}</dd>
+                <dt>Fournisseur / expéditeur</dt>
+                <dd>{{ doc['fournisseur'] || doc['from'] || '—' }}</dd>
+                @if (doc['montant'] != null && doc['montant'] !== '') {
+                  <dt>Montant</dt>
+                  <dd>{{ $any(doc['montant']) | number: '1.2-2' }} EUR</dd>
                 }
+                @if (doc['scenarioId']) {
+                  <dt>Scénario</dt>
+                  <dd>{{ doc['scenarioId'] }}</dd>
+                }
+                @if (doc['fileName']) {
+                  <dt>Fichier</dt>
+                  <dd class="modal-doc-filename">{{ doc['fileName'] }}</dd>
+                }
+                <dt>Identifiant</dt>
+                <dd><code class="modal-id-inline">{{ doc['id'] || src.id }}</code></dd>
+              </dl>
+              <div class="modal-doc-toolbar">
+                @if (src.hasPdf) {
+                  <button
+                    type="button"
+                    class="btn-doc-pdf-toggle"
+                    (click)="toggleDocumentPdf()"
+                    [attr.aria-expanded]="showDocumentPdf()"
+                    title="Afficher ou masquer le PDF"
+                  >
+                    <i class="fas fa-file-pdf"></i>
+                    <span>{{ showDocumentPdf() ? 'Masquer le PDF' : 'Voir le PDF' }}</span>
+                  </button>
+                  <a class="btn-doc-pdf-external" [href]="pdfHref(src.id)" target="_blank" rel="noopener" title="Ouvrir le PDF dans un nouvel onglet">
+                    <i class="fas fa-external-link-alt"></i>
+                  </a>
+                } @else {
+                  <p class="modal-muted modal-doc-nopdf"><i class="fas fa-info-circle"></i> Aucun fichier PDF stocké pour ce document.</p>
+                }
+                <button type="button" class="btn-timeline-extend" (click)="openDocumentInTimeline()">
+                  <i class="fas fa-expand-alt"></i>
+                  Ouvrir dans la frise Timeline
+                </button>
               </div>
-            </div>
-          </div>
+              @if (showDocumentPdf() && src.hasPdf) {
+                <div class="modal-pdf-wrap modal-pdf-collapsible">
+                  <ngx-extended-pdf-viewer
+                    [src]="pdfHref(src.id)"
+                    [height]="'min(55vh, 560px)'"
+                    [language]="'fr-FR'"
+                    [textLayer]="true"
+                    [showToolbar]="true"
+                    [sidebarVisible]="true"
+                  />
+                </div>
+              }
+            } @else {
+              <p class="modal-muted">Document introuvable.</p>
+              <p class="modal-id"><code>{{ src.id }}</code></p>
+            }
+          }
+          @case ('mouvement') {
+            @if (mouvementDetail(); as m) {
+              <dl class="modal-dl">
+                <dt>Date</dt><dd>{{ m['date'] }}</dd>
+                <dt>Montant</dt><dd>{{ m['montant'] }} €</dd>
+                <dt>Libellé</dt><dd>{{ m['libelle'] }}</dd>
+                <dt>Référence</dt><dd>{{ m['reference'] }}</dd>
+                <dt>Type</dt><dd>{{ m['type_mouvement'] }}</dd>
+              </dl>
+            } @else {
+              <p class="modal-muted">Chargement…</p>
+            }
+          }
+          @case ('rapprochement') {
+            @if (rapprochementDetail(); as r) {
+              <dl class="modal-dl">
+                <dt>Statut</dt><dd>{{ r['status'] }}</dd>
+                <dt>Écart</dt><dd>{{ r['ecart'] }}</dd>
+                <dt>Mouvement</dt><dd>{{ r['mouvementId'] }}</dd>
+                <dt>Factures</dt><dd>{{ r['factureIds'] | json }}</dd>
+              </dl>
+            } @else {
+              <p class="modal-muted">Chargement…</p>
+            }
+          }
+          @case ('timeline_global') {
+            @if (modalTimelineLoading()) {
+              <p class="modal-muted">Chargement de la frise…</p>
+            } @else if (timelineEvents().length) {
+              <ul class="modal-timeline-list">
+                @for (ev of timelineEvents(); track ev['id']) {
+                  <li>
+                    <button type="button" class="modal-timeline-row" (click)="openTimelineEvent(ev)">
+                      <span class="ev-date">{{ ev['date'] }}</span>
+                      <span class="ev-type">{{ ev['type'] }}</span>
+                      <span class="ev-ref">{{ ev['reference'] || ev['subject'] }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="modal-muted">Aucun événement.</p>
+            }
+            <button type="button" class="btn-modal-nav" (click)="openTimelinePage()">
+              <i class="fas fa-stream"></i> Ouvrir la page Timeline
+            </button>
+          }
+          @case ('timeline_scenario') {
+            @if (modalTimelineLoading()) {
+              <p class="modal-muted">Chargement du scénario…</p>
+            } @else if (timelineEvents().length) {
+              <ul class="modal-timeline-list">
+                @for (ev of timelineEvents(); track ev['id']) {
+                  <li>
+                    <button type="button" class="modal-timeline-row" (click)="openTimelineEvent(ev)">
+                      <span class="ev-date">{{ ev['date'] }}</span>
+                      <span class="ev-type">{{ ev['type'] }}</span>
+                      <span class="ev-ref">{{ ev['reference'] || ev['subject'] }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="modal-muted">Aucun événement pour ce scénario.</p>
+            }
+            <button type="button" class="btn-modal-nav" (click)="openTimelinePage(src.scenarioId)">
+              <i class="fas fa-stream"></i> Ouvrir la timeline (scénario)
+            </button>
+          }
+          @default {
+            <p class="modal-muted">Source non reconnue ou ID introuvable dans les données.</p>
+            <p class="modal-id"><code>{{ src.id }}</code></p>
+          }
         }
       </div>
     </div>
+  </div>
+}
+
+<div class="page">
+  <div class="header-row">
+    <div>
+      <h1><i class="fas fa-robot"></i> Assistant IA</h1>
+      <p class="subtitle">Posez des questions sur vos factures et mouvements bancaires — l’historique est sauvegardé.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-reset" (click)="resetAssistant()" [disabled]="loading()">
+        <i class="fas fa-rotate-left"></i> Réinitialiser la conversation
+      </button>
+      <div class="header-svg">
+        <svg id="svg-query-brain" viewBox="0 0 200 200" fill="none" stroke="#6366f1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M60,50 C40,50 25,65 28,85 C20,90 18,108 30,118 C28,135 40,150 60,148 C70,158 90,160 100,152 C110,160 130,158 140,148 C160,150 172,135 170,118 C182,108 180,90 172,85 C175,65 160,50 140,50 C130,42 110,40 100,48 C90,40 70,42 60,50 Z"/>
+          <path d="M100,48 C100,60 98,80 100,100 C102,120 100,140 100,152" stroke-dasharray="5,5"/>
+          <path d="M45,75 C55,70 65,78 60,85"/><path d="M35,100 C48,95 58,102 50,110"/><path d="M50,125 C60,120 72,128 65,135"/>
+          <path d="M155,75 C145,70 135,78 140,85"/><path d="M165,100 C152,95 142,102 150,110"/><path d="M150,125 C140,120 128,128 135,135"/>
+          <circle cx="70" cy="80" r="4" fill="#6366f1" opacity="0.5"/><circle cx="130" cy="80" r="4" fill="#6366f1" opacity="0.5"/>
+          <circle cx="55" cy="108" r="4" fill="#6366f1" opacity="0.5"/><circle cx="145" cy="108" r="4" fill="#6366f1" opacity="0.5"/>
+          <path d="M160,35 L165,25 L170,35 L180,38 L170,42 L165,52 L160,42 L150,38 Z" stroke-width="2"/>
+          <line x1="80" y1="170" x2="80" y2="185" stroke-width="2"/><line x1="100" y1="168" x2="100" y2="185" stroke-width="2"/><line x1="120" y1="170" x2="120" y2="185" stroke-width="2"/>
+          <line x1="70" y1="185" x2="130" y2="185" stroke-width="2"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="query-box">
+    <textarea [(ngModel)]="queryText" placeholder="Ex: Quelles factures correspondent à la sortie de 1500€ du 15 mars ?"
+              rows="3" (keydown.control.enter)="ask()"></textarea>
+    <button
+      class="btn-ask"
+      type="button"
+      (click)="ask()"
+      [disabled]="loading() || !queryText.trim()"
+      [attr.aria-label]="loading() ? 'Envoi en cours' : 'Envoyer la question'"
+    >
+      @if (loading()) {
+        <span class="btn-ask-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+      } @else {
+        Demander
+      }
+    </button>
+  </div>
+
+  <div class="history">
+    @if (loading()) {
+      <div class="chat-item chat-item--loading" role="status" aria-live="polite" aria-busy="true">
+        <div class="answer">
+          <span class="avatar ai">🤖</span>
+          <div class="answer-body chat-inline-loading">
+            <div class="query-loading-shimmer"></div>
+            <div class="query-loading-shimmer w-75"></div>
+            <div class="query-loading-shimmer w-50"></div>
+            <div class="query-loading-pulse" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+    @for (item of displayedHistory(); track trackTurn($index, item)) {
+      <div class="chat-item">
+        <div class="question">
+          <span class="avatar user">👤</span>
+          <p>{{ item.question }}</p>
+        </div>
+        <div class="answer">
+          <span class="avatar ai">🤖</span>
+          <div class="answer-body">
+            @if (item.timelineEvents?.length) {
+              <div class="chat-timeline-block">
+                <div class="chat-timeline-head">
+                  <i class="fas fa-stream"></i>
+                  @if (item.timelineMeta?.scope === 'scenario') {
+                    <span class="chat-timeline-title">
+                      Parcours d’achat
+                      @if (item.timelineMeta?.purchaseLabel) {
+                        — {{ item.timelineMeta?.purchaseLabel }}
+                      }
+                    </span>
+                  } @else {
+                    <span class="chat-timeline-title">Tous les parcours d’achat</span>
+                  }
+                  <span class="chat-timeline-count">{{ item.timelineEvents!.length }} événement(s)</span>
+                </div>
+                <p class="chat-timeline-hint">Cliquez sur une carte pour ouvrir le détail (PDF, mouvement…)</p>
+                <div class="chat-tl-scroll">
+                  <div class="chat-tl-track">
+                    <div class="chat-tl-line"></div>
+                    @for (ev of item.timelineEvents!; track ev['id']; let i = $index) {
+                      <div class="chat-tl-node" [style.animation-delay]="(i * 50) + 'ms'">
+                        <button
+                          type="button"
+                          class="chat-tl-hit"
+                          (click)="openTimelineEvent(ev)"
+                          [attr.aria-label]="'Détail : ' + (ev['reference'] || ev['subject'] || ev['date'])"
+                        >
+                          <div
+                            class="chat-tl-dot"
+                            [style.background]="tlRow(ev).color"
+                            [style.border-color]="tlRow(ev).color"
+                          >
+                            <i class="fas {{ tlRow(ev).icon }}"></i>
+                          </div>
+                          <div
+                            class="chat-tl-stem"
+                            [class.up]="i % 2 === 0"
+                            [class.down]="i % 2 !== 0"
+                            [style.background]="tlRow(ev).color + '40'"
+                          ></div>
+                          <div
+                            class="chat-tl-card"
+                            [class.up]="i % 2 === 0"
+                            [class.down]="i % 2 !== 0"
+                            [style.border-color]="tlRow(ev).color"
+                          >
+                            <div class="chat-tl-card-date">{{ ev['date'] }}</div>
+                            <span class="chat-tl-badge" [style.background]="tlRow(ev).color">
+                              <i class="fas {{ tlRow(ev).icon }}"></i>
+                              {{ tlRow(ev).label }}
+                            </span>
+                            <div class="chat-tl-card-ref">{{ ev['reference'] || ev['subject'] || '' }}</div>
+                            @if (ev['fournisseur']) {
+                              <div class="chat-tl-card-sub">{{ ev['fournisseur'] }}</div>
+                            }
+                            @if (ev['montant'] != null && ev['montant'] !== '') {
+                              <div class="chat-tl-card-amount" [style.color]="tlRow(ev).color">
+                                {{ $any(ev['montant']) | number: '1.2-2' }} EUR
+                              </div>
+                            }
+                          </div>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+              <details class="answer-text-fold">
+                <summary>Réponse textuelle de l’assistant</summary>
+                <p>{{ item.answer }}</p>
+              </details>
+            } @else {
+              <p class="answer-plain">{{ item.answer }}</p>
+            }
+            @if (item.sources && item.sources.length) {
+              <div class="sources">
+                <strong>Sources</strong>
+                <span class="sources-hint">cliquer pour ouvrir</span>
+                <div class="source-chips">
+                  @for (s of item.sources; track s.id) {
+                    <button type="button" class="source-chip" (click)="openSource(s)">
+                      <i class="fas {{ sourceIcon(s.kind) }}"></i>
+                      <span class="chip-label">{{ s.label }}</span>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

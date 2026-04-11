@@ -1,8 +1,41 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 const BASE = 'http://localhost:3000/api';
+
+export type AIQuerySourceKind =
+  | 'document'
+  | 'mouvement'
+  | 'rapprochement'
+  | 'timeline_global'
+  | 'timeline_scenario'
+  | 'unknown';
+
+export interface AIQuerySourceRef {
+  id: string;
+  kind: AIQuerySourceKind;
+  label: string;
+  hasPdf?: boolean;
+  scenarioId?: string;
+}
+
+export interface AIQueryTimelineMeta {
+  scope: 'global' | 'scenario';
+  scenarioId?: string;
+  /** Libellé métier (fournisseur), pas S01 */
+  purchaseLabel?: string;
+}
+
+export interface AIQueryHistoryTurn {
+  question: string;
+  answer: string;
+  sources: AIQuerySourceRef[];
+  at: string;
+  timelineEvents?: Record<string, unknown>[];
+  timelineMeta?: AIQueryTimelineMeta;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -47,8 +80,38 @@ export class ApiService {
   getTimeline(): Observable<any[]> { return this.http.get<any[]>(`${BASE}/timeline`); }
   getScenarioTimeline(scenarioId: string): Observable<any[]> { return this.http.get<any[]>(`${BASE}/timeline/scenario/${scenarioId}`); }
 
-  // AI Query
-  query(q: string): Observable<{ answer: string; sources: string[] }> { return this.http.post<{ answer: string; sources: string[] }>(`${BASE}/query`, { query: q }); }
+  // AI Query (historique + sources enrichies côté serveur)
+  query(
+    q: string,
+    sessionId: string
+  ): Observable<{
+    answer: string;
+    sources: AIQuerySourceRef[];
+    sessionId: string;
+    timelineEvents?: Record<string, unknown>[];
+    timelineMeta?: AIQueryTimelineMeta;
+  }> {
+    return this.http.post<{
+      answer: string;
+      sources: AIQuerySourceRef[];
+      sessionId: string;
+      timelineEvents?: Record<string, unknown>[];
+      timelineMeta?: AIQueryTimelineMeta;
+    }>(`${BASE}/query`, {
+      query: q,
+      sessionId,
+    });
+  }
+
+  getQueryHistory(sessionId: string): Observable<{ sessionId: string; turns: AIQueryHistoryTurn[] }> {
+    return this.http.get<{ sessionId: string; turns: AIQueryHistoryTurn[] }>(`${BASE}/query/history/${sessionId}`);
+  }
+
+  resetQuerySession(sessionId: string): Observable<void> {
+    return this.http
+      .post(`${BASE}/query/reset`, { sessionId }, { responseType: 'text' })
+      .pipe(map(() => undefined));
+  }
 
   // Stats
   getStats(): Observable<any> { return this.http.get(`${BASE}/stats`); }
