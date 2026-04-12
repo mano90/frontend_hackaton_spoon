@@ -3,11 +3,76 @@
       <p style="color:white;font-weight:500;margin-top:1rem">{{ spinnerMsg() }}</p>
     </ngx-spinner>
 
+    @if (batchUploadOpen()) {
+      <div class="batch-upload-overlay" role="alertdialog" aria-busy="true" aria-live="polite">
+        <div class="batch-upload-panel">
+          <h3 class="batch-upload-title">
+            <i class="fas fa-file-pdf"></i> Import de plusieurs PDF
+            @if (batchUploadClientDemo) {
+              <span class="batch-upload-badge">Test UI local</span>
+            }
+          </h3>
+          @if (batchUploadClientDemo) {
+            @if (batchDemoProgress(); as bp) {
+              <p class="batch-upload-phase" [class.batch-upload-phase--err]="bp.phase === 'error'">{{ bp.message }}</p>
+              <div class="batch-upload-bar" aria-hidden="true">
+                <div class="batch-upload-bar-fill" [style.width.%]="bp.percent"></div>
+              </div>
+              <p class="batch-upload-pct">{{ bp.percent | number:'1.0-0' }} %</p>
+              @if (bp.index != null && bp.total != null) {
+                <p class="batch-upload-step">Fichier {{ bp.index }} / {{ bp.total }}</p>
+              }
+              @if (bp.step != null && bp.stepCount != null) {
+                <p class="batch-upload-substep">Étape {{ bp.step }} / {{ bp.stepCount }}</p>
+              }
+            } @else {
+              <p class="batch-upload-phase">Préparation…</p>
+              <div class="batch-upload-bar"><div class="batch-upload-bar-fill batch-upload-bar-fill--pulse"></div></div>
+            }
+          } @else {
+            @if (importSocket.documentsBatchProgress(); as bp) {
+              <p class="batch-upload-phase" [class.batch-upload-phase--err]="bp.phase === 'error'">{{ bp.message }}</p>
+              <div class="batch-upload-bar" aria-hidden="true">
+                <div class="batch-upload-bar-fill" [style.width.%]="bp.percent"></div>
+              </div>
+              <p class="batch-upload-pct">{{ bp.percent | number:'1.0-0' }} %</p>
+              @if (bp.index != null && bp.total != null) {
+                <p class="batch-upload-step">Fichier {{ bp.index }} / {{ bp.total }}</p>
+              }
+              @if (bp.step != null && bp.stepCount != null) {
+                <p class="batch-upload-substep">Étape {{ bp.step }} / {{ bp.stepCount }}</p>
+              }
+            } @else {
+              <p class="batch-upload-phase">
+                {{ importSocket.socketId() ? 'En attente du serveur…' : 'Connexion Socket.io…' }}
+              </p>
+              <div class="batch-upload-bar"><div class="batch-upload-bar-fill batch-upload-bar-fill--pulse"></div></div>
+            }
+          }
+          @if (batchOverlayLogLines().length) {
+            <div class="batch-upload-log-wrap">
+              <div class="batch-upload-log">
+                @for (line of batchOverlayLogLines(); track $index) {
+                  <div class="batch-upload-log-line">{{ line }}</div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
     <div class="page" [class.pdf-open]="!!pdfUrl()">
       <h1><i class="fas fa-folder-open"></i> Documents</h1>
 
       <!-- Upload zone — NO type selector, AI classifies automatically -->
-      <div class="upload-zone" (drop)="onDrop($event)" (dragover)="$event.preventDefault()" (click)="fileInput.click()">
+      <div
+        class="upload-zone"
+        [class.upload-zone--blocked]="batchUploadOpen()"
+        (drop)="onDrop($event)"
+        (dragover)="$event.preventDefault()"
+        (click)="onUploadZoneClick(fileInput)"
+      >
         <input #fileInput type="file" accept=".pdf" (change)="onFileSelect($event)" hidden multiple>
         <div class="upload-svg">
           <svg id="svg-doc-upload" viewBox="0 0 200 200" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -90,37 +155,96 @@
           </svg>
         </div>
       }
+      @if (activeTab() === 'pending_duplicate') {
+        <div class="tab-bg-svg">
+          <svg id="svg-tab-bg" viewBox="0 0 200 200" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="40" y="35" width="120" height="130" rx="8"/>
+            <rect x="55" y="50" width="90" height="100" rx="4"/>
+            <rect x="70" y="65" width="60" height="70" rx="2"/>
+            <path d="M85,95 L100,110 L115,85" stroke-width="4" fill="none"/>
+          </svg>
+        </div>
+      }
 
       <!-- Table -->
       <div class="table-container">
         <table>
           <thead>
             <tr>
-              <th>Type</th><th>Reference / Objet</th><th>Fournisseur / De</th><th>Date</th><th>Montant</th><th>Scenario</th><th>Actions</th>
+              <th>Type</th><th>Reference / Objet</th><th>Fournisseur / De</th><th>Date</th><th>Montant</th>
+              <th>
+                @if (activeTab() === 'pending_duplicate') {
+                  Correspondance
+                } @else {
+                  Scenario
+                }
+              </th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             @for (d of paged(); track d.id) {
-              <tr>
-                <td><span class="type-badge" [attr.data-type]="d.docType || d.type">
-                  <i class="fas {{ getIcon(d.docType || d.type) }}"></i> {{ getLabel(d.docType || d.type) }}
-                </span></td>
-                <td>{{ d.reference || d.subject || d.fileName }}</td>
-                <td>{{ d.fournisseur || d.from || '-' }}</td>
-                <td>{{ d.date }}</td>
-                <td class="montant">{{ d.montant ? (d.montant | number:'1.2-2') + ' EUR' : '-' }}</td>
-                <td>
-                  @if (d.scenarioId) { <span class="badge-scenario">{{ d.scenarioId }}</span> }
-                  @if (d.hasRelation === false) { <span class="badge-no-rel">Aucune relation</span> }
-                  @if (d.hasRelation === true) { <span class="badge-rel">{{ d.relationType }}</span> }
-                </td>
-                <td class="actions">
-                  <button class="btn-view" (click)="viewPdf(d.id)" title="Voir PDF"><i class="fas fa-file-pdf"></i></button>
-                  <button class="btn-delete" (click)="remove(d.id)" title="Supprimer"><i class="fas fa-trash-alt"></i></button>
-                </td>
-              </tr>
+              @if (activeTab() !== 'pending_duplicate') {
+                <tr>
+                  <td><span class="type-badge" [attr.data-type]="d.docType || d.type">
+                    <i class="fas {{ getIcon(d.docType || d.type) }}"></i> {{ getLabel(d.docType || d.type) }}
+                  </span></td>
+                  <td>{{ d.reference || d.subject || d.fileName }}</td>
+                  <td>{{ d.fournisseur || d.from || '-' }}</td>
+                  <td>{{ d.date }}</td>
+                  <td class="montant">{{ d.montant ? (d.montant | number:'1.2-2') + ' EUR' : '-' }}</td>
+                  <td>
+                    @if (d.scenarioId) { <span class="badge-scenario">{{ d.scenarioId }}</span> }
+                    @if (d.hasRelation === false) { <span class="badge-no-rel">Aucune relation</span> }
+                    @if (d.hasRelation === true) { <span class="badge-rel">{{ d.relationType }}</span> }
+                  </td>
+                  <td class="actions">
+                    <button class="btn-view" (click)="viewPdf(d.id)" title="Voir PDF"><i class="fas fa-file-pdf"></i></button>
+                    <button class="btn-delete" (click)="remove(d.id)" title="Supprimer"><i class="fas fa-trash-alt"></i></button>
+                  </td>
+                </tr>
+              } @else {
+                <tr>
+                  <td>
+                    <span class="type-badge type-badge--pending-dup" data-type="pending_duplicate">
+                      <i class="fas fa-clone"></i> Doublon suspect
+                    </span>
+                  </td>
+                  <td>{{ d.reference || d.fileName }}</td>
+                  <td>{{ d.fournisseur || '-' }}</td>
+                  <td>{{ d.date }}</td>
+                  <td class="montant">{{ d.montant != null ? (d.montant | number:'1.2-2') + ' EUR' : '-' }}</td>
+                  <td>
+                    @if (d.similarity?.confidence != null) {
+                      <button
+                        type="button"
+                        class="btn-dup-match"
+                        (click)="openDuplicateFromPending(d)"
+                        [title]="dupMatchTooltip(d)"
+                      >
+                        <i class="fas fa-equals" aria-hidden="true"></i>
+                        {{ d.similarity?.confidence | number:'1.0-0' }}&nbsp;% correspondance
+                      </button>
+                    } @else {
+                      <span class="badge-dup-sim">—</span>
+                    }
+                  </td>
+                  <td class="actions">
+                    <button class="btn-view" (click)="viewPendingPdf(d.id)" title="Voir PDF (provisoire)"><i class="fas fa-file-pdf"></i></button>
+                    <button class="btn-resolve" type="button" (click)="openDuplicateFromPending(d)" title="Décider : remplacer ou garder les deux">
+                      <i class="fas fa-balance-scale"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
             } @empty {
-              <tr><td colspan="7" class="empty"><i class="fas fa-inbox"></i> Aucun document</td></tr>
+              <tr><td colspan="7" class="empty">
+                @if (activeTab() === 'pending_duplicate') {
+                  <i class="fas fa-check-circle"></i> Aucun doublon suspect en attente
+                } @else {
+                  <i class="fas fa-inbox"></i> Aucun document
+                }
+              </td></tr>
             }
           </tbody>
         </table>
@@ -133,7 +257,7 @@
             <button [class.active]="p === page()" (click)="setPage(p)">{{ p }}</button>
           }
           <button (click)="setPage(page() + 1)" [disabled]="page() === totalPages()"><i class="fas fa-chevron-right"></i></button>
-          <span class="page-info">{{ filtered().length }} elements</span>
+          <span class="page-info">{{ filteredDocs().length }} elements</span>
         </div>
       }
     </div>
@@ -209,38 +333,91 @@
     }
 
     <!-- Duplicate Confirmation Modal -->
-    @if (duplicateInfo()) {
-      <div class="modal-overlay">
-        <div class="modal-content classify-modal" (click)="$event.stopPropagation()">
-          <div class="modal-header warning-header">
-            <span class="modal-title"><i class="fas fa-exclamation-triangle"></i> Doublon detecte</span>
-          </div>
-          <div class="classify-body">
-            <div class="classify-alert">
-              <p>{{ duplicateInfo()!.similarity.reason }}</p>
-              <p class="confidence">Confiance : <strong>{{ duplicateInfo()!.similarity.confidence }}%</strong></p>
-            </div>
-            <div class="comparison">
-              <div class="compare-card incoming">
-                <h4>Nouveau</h4>
-                <div class="compare-row"><span>Fichier</span><strong>{{ duplicateInfo()!.pendingDocument.fileName }}</strong></div>
-                <div class="compare-row"><span>Reference</span><strong>{{ duplicateInfo()!.pendingDocument.reference }}</strong></div>
-                <div class="compare-row"><span>Montant</span><strong>{{ duplicateInfo()!.pendingDocument.montant | number:'1.2-2' }} EUR</strong></div>
+    @if (duplicateInfo(); as dup) {
+      <div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="dup-modal-title">
+        <div class="modal-content classify-modal duplicate-modal" (click)="$event.stopPropagation()">
+          <header class="duplicate-modal__hero">
+            <div class="duplicate-modal__hero-main">
+              <div class="duplicate-modal__icon" aria-hidden="true">
+                <i class="fas fa-clone"></i>
               </div>
-              @if (duplicateInfo()!.similarity.existingDocument) {
-                <div class="compare-card existing">
-                  <h4>Existant</h4>
-                  <div class="compare-row"><span>Fichier</span><strong>{{ duplicateInfo()!.similarity.existingDocument.fileName }}</strong></div>
-                  <div class="compare-row"><span>Reference</span><strong>{{ duplicateInfo()!.similarity.existingDocument.reference }}</strong></div>
-                  <div class="compare-row"><span>Montant</span><strong>{{ duplicateInfo()!.similarity.existingDocument.montant | number:'1.2-2' }} EUR</strong></div>
+              <div class="duplicate-modal__hero-text">
+                <h2 id="dup-modal-title" class="duplicate-modal__title">Doublon détecté</h2>
+                <p class="duplicate-modal__lede">La nouvelle pièce est très proche d’un document déjà présent dans la base.</p>
+              </div>
+            </div>
+            @if (dup.similarity.confidence != null) {
+              <div class="duplicate-modal__score" title="Score de similarité (IA)">
+                <div class="duplicate-modal__score-row">
+                  <span class="duplicate-modal__score-value">{{ dup.similarity.confidence | number:'1.0-0' }}</span>
+                  <span class="duplicate-modal__score-unit">%</span>
+                </div>
+                <span class="duplicate-modal__score-label">correspondance</span>
+              </div>
+            }
+          </header>
+
+          <div class="duplicate-modal__body">
+            <section class="duplicate-modal__reason" aria-label="Motif">
+              <p class="duplicate-modal__reason-text">{{ dup.similarity.reason }}</p>
+            </section>
+
+            <section
+              class="duplicate-modal__compare"
+              [class.duplicate-modal__compare--single]="!dup.similarity.existingDocument"
+              aria-label="Comparaison"
+            >
+              <div class="duplicate-panel duplicate-panel--new">
+                <h3 class="duplicate-panel__title"><i class="fas fa-file-import"></i> Nouveau fichier</h3>
+                <dl class="duplicate-fields">
+                  <div class="duplicate-field">
+                    <dt>Fichier</dt>
+                    <dd>{{ dup.pendingDocument.fileName }}</dd>
+                  </div>
+                  <div class="duplicate-field">
+                    <dt>Référence</dt>
+                    <dd>{{ dup.pendingDocument.reference || '—' }}</dd>
+                  </div>
+                  <div class="duplicate-field">
+                    <dt>Montant</dt>
+                    <dd>{{ dup.pendingDocument.montant != null ? (dup.pendingDocument.montant | number:'1.2-2') + ' EUR' : '—' }}</dd>
+                  </div>
+                </dl>
+              </div>
+
+              @if (dup.similarity.existingDocument) {
+                <div class="duplicate-modal__vs" aria-hidden="true"><span>vs</span></div>
+                <div class="duplicate-panel duplicate-panel--exist">
+                  <h3 class="duplicate-panel__title"><i class="fas fa-database"></i> Déjà enregistré</h3>
+                  <dl class="duplicate-fields">
+                    <div class="duplicate-field">
+                      <dt>Fichier</dt>
+                      <dd>{{ dup.similarity.existingDocument.fileName }}</dd>
+                    </div>
+                    <div class="duplicate-field">
+                      <dt>Référence</dt>
+                      <dd>{{ dup.similarity.existingDocument.reference || '—' }}</dd>
+                    </div>
+                    <div class="duplicate-field">
+                      <dt>Montant</dt>
+                      <dd>{{ dup.similarity.existingDocument.montant != null ? (dup.similarity.existingDocument.montant | number:'1.2-2') + ' EUR' : '—' }}</dd>
+                    </div>
+                  </dl>
                 </div>
               }
-            </div>
-            <div class="classify-actions">
-              <button class="btn-cancel" (click)="cancelDuplicate()"><i class="fas fa-times"></i> Annuler</button>
-              <button class="btn-keep" (click)="keepBoth()"><i class="fas fa-copy"></i> Garder les deux</button>
-              <button class="btn-replace" (click)="replaceDuplicate()"><i class="fas fa-exchange-alt"></i> Remplacer</button>
-            </div>
+            </section>
+
+            <footer class="duplicate-modal__footer">
+              <button type="button" class="duplicate-btn duplicate-btn--ghost" (click)="cancelDuplicate()">
+                <i class="fas fa-times"></i> Annuler
+              </button>
+              <button type="button" class="duplicate-btn duplicate-btn--secondary" (click)="keepBoth()">
+                <i class="fas fa-copy"></i> Garder les deux
+              </button>
+              <button type="button" class="duplicate-btn duplicate-btn--primary" (click)="replaceDuplicate()">
+                <i class="fas fa-exchange-alt"></i> Remplacer l’existant
+              </button>
+            </footer>
           </div>
         </div>
       </div>

@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
 import { ApiService } from '../../services/api.service';
 import { ImportSocketService } from '../../services/import-socket.service';
+import { ImportUiBlockService } from '../../services/import-ui-block.service';
 
 @Component({
   selector: 'app-mouvements',
@@ -15,6 +16,7 @@ import { ImportSocketService } from '../../services/import-socket.service';
 export class MouvementsComponent implements OnInit {
   private api = inject(ApiService);
   private spinner = inject(NgxSpinnerService);
+  private importUiBlock = inject(ImportUiBlockService);
   readonly importSocket = inject(ImportSocketService);
 
   mouvements = signal<any[]>([]);
@@ -40,6 +42,14 @@ export class MouvementsComponent implements OnInit {
     date: '',
     type_mouvement: 'sortie',
   };
+
+  constructor() {
+    effect((onCleanup) => {
+      if (!this.importingCsv()) return;
+      this.importUiBlock.acquire();
+      onCleanup(() => this.importUiBlock.release());
+    });
+  }
 
   ngOnInit() { this.load(); }
 
@@ -73,16 +83,14 @@ export class MouvementsComponent implements OnInit {
     if (!file) return;
     this.error.set('');
     this.importSocket.clearProgress();
-    let socketId: string | undefined;
     try {
-      const id = await this.importSocket.ensureSocket();
-      socketId = id ?? undefined;
+      await this.importSocket.ensureSocket();
     } catch {
-      socketId = undefined;
+      /* progression impossible sans socket ; l’import HTTP peut quand même réussir */
     }
 
     this.importingCsv.set(true);
-    this.api.importMouvementsCsv(file, socketId).subscribe({
+    this.api.importMouvementsCsv(file).subscribe({
       next: (res) => {
         this.importingCsv.set(false);
         this.importSocket.clearProgress();

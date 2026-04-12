@@ -1,12 +1,17 @@
     .import-overlay {
       position: fixed;
       inset: 0;
-      z-index: 10050;
-      background: rgba(15, 23, 42, 0.45);
+      z-index: 10000050;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 1rem;
+      pointer-events: auto;
+      cursor: wait;
+      touch-action: none;
     }
     .import-panel {
       background: #fff;
@@ -15,6 +20,9 @@
       min-width: min(420px, 92vw);
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
       border: 1px solid #e2e8f0;
+      cursor: default;
+      user-select: text;
+      touch-action: auto;
     }
     .import-title {
       margin: 0 0 1rem 0;

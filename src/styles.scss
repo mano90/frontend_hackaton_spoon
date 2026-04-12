@@ -9,3 +9,12 @@ body {
   background: #f1f5f9;
   color: #1e293b;
 }
+
+/** Import CSV / lot PDF : pas de scroll ni d’interaction hors overlay */
+html.ui-import-blocking,
+body.ui-import-blocking {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  touch-action: none;
+  user-select: none;
+}
