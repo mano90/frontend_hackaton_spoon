@@ -187,6 +187,7 @@ export class QueryComponent implements AfterViewInit, OnInit {
             ...(res.timelineEvents?.length
               ? { timelineEvents: res.timelineEvents, timelineMeta: res.timelineMeta }
               : {}),
+            ...(res.dossierBriefs?.length ? { dossierBriefs: res.dossierBriefs } : {}),
           },
         ]);
         this.loading.set(false);

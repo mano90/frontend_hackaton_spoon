@@ -28,6 +28,16 @@ export interface AIQueryTimelineMeta {
   purchaseLabel?: string;
 }
 
+/** Synthèse structurée dossier / parcours (aligné backend). */
+export interface AIQueryDossierBrief {
+  scenarioId?: string | null;
+  libelle?: string;
+  resume: string;
+  etapes?: string[];
+  anomalies?: string[];
+  pistes?: string[];
+}
+
 export interface AIQueryHistoryTurn {
   question: string;
   answer: string;
@@ -35,6 +45,7 @@ export interface AIQueryHistoryTurn {
   at: string;
   timelineEvents?: Record<string, unknown>[];
   timelineMeta?: AIQueryTimelineMeta;
+  dossierBriefs?: AIQueryDossierBrief[];
 }
 
 export type PendingListItem = {
@@ -152,6 +163,7 @@ export class ApiService {
     sessionId: string;
     timelineEvents?: Record<string, unknown>[];
     timelineMeta?: AIQueryTimelineMeta;
+    dossierBriefs?: AIQueryDossierBrief[];
   }> {
     return this.http.post<{
       answer: string;
@@ -159,6 +171,7 @@ export class ApiService {
       sessionId: string;
       timelineEvents?: Record<string, unknown>[];
       timelineMeta?: AIQueryTimelineMeta;
+      dossierBriefs?: AIQueryDossierBrief[];
     }>(`${BASE}/query`, {
       query: q,
       sessionId,
