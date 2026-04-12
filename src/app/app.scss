@@ -1,6 +1,24 @@
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+}
+
 .app-layout {
   display: flex;
   min-height: 100vh;
+}
+
+/** Voile plein écran (sibling après le layout) — bloque sidebar + contenu, comme Bootstrap .modal-backdrop */
+.app-import-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000040;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  pointer-events: auto;
+  touch-action: none;
+  cursor: not-allowed;
 }
 
 .sidebar {
@@ -144,4 +162,243 @@
   flex: 1;
   background: #f1f5f9;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.app-topbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0.5rem 1.25rem 0.35rem;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 30;
+  min-height: 2.5rem;
+}
+
+.app-notif-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  background: transparent;
+}
+
+.app-notif-wrap {
+  position: relative;
+}
+
+.app-notif-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: 10px;
+  background: #fff;
+  color: #4338ca;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: #eef2ff;
+    color: #312e81;
+  }
+
+  .fa-bell {
+    font-size: 1.1rem;
+  }
+}
+
+.app-notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 1.1rem;
+  text-align: center;
+}
+
+.app-notif-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: min(320px, calc(100vw - 2rem));
+  max-height: min(360px, 70vh);
+  overflow: auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.18);
+  border: 1px solid #e2e8f0;
+  z-index: 40;
+  padding: 0.5rem 0 0.35rem;
+}
+
+.app-notif-panel__head {
+  padding: 0.35rem 1rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0f172a;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  .fa-clone {
+    color: #f59e0b;
+  }
+}
+
+.app-notif-panel__empty {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.app-notif-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+}
+
+.app-notif-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #1e293b;
+  transition: background 0.12s ease;
+
+  &:hover {
+    background: #f8fafc;
+  }
+
+  .fa-file-pdf {
+    color: #ef4444;
+    flex-shrink: 0;
+  }
+}
+
+.app-notif-item__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-notif-item__pct {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #9a3412;
+  background: #ffedd5;
+  padding: 0.12rem 0.45rem;
+  border-radius: 6px;
+  border: 1px solid #fdba74;
+}
+
+.app-notif-panel__link {
+  display: block;
+  padding: 0.6rem 1rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #4338ca;
+  text-decoration: none;
+  border-top: 1px solid #f1f5f9;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/** Barre globale au-dessus du voile (import CSV / lot documents / démo) */
+.global-import-strip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000050;
+  padding: 0.65rem 1.25rem 0.75rem;
+  background: linear-gradient(135deg, #312e81 0%, #4338ca 100%);
+  color: #e0e7ff;
+  box-shadow: 0 2px 12px rgba(49, 46, 129, 0.35);
+  pointer-events: none;
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    font-size: 0.875rem;
+    line-height: 1.35;
+  }
+
+  &__badge {
+    flex: 0 0 auto;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+  }
+
+  &__msg {
+    flex: 1 1 200px;
+    min-width: 0;
+    color: #f8fafc;
+  }
+
+  &__step {
+    flex: 0 1 auto;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #c7d2fe;
+    white-space: nowrap;
+  }
+
+  &__pct {
+    flex: 0 0 auto;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  &__bar {
+    margin-top: 0.45rem;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+  }
+
+  &__fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #a5b4fc, #e0e7ff);
+    transition: width 0.25s ease-out;
+    min-width: 4px;
+  }
 }

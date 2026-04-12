@@ -1,8 +1,10 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
 import { ApiService } from '../../services/api.service';
+import { ImportSocketService } from '../../services/import-socket.service';
+import { ImportUiBlockService } from '../../services/import-ui-block.service';
 
 @Component({
   selector: 'app-mouvements',
@@ -14,6 +16,8 @@ import { ApiService } from '../../services/api.service';
 export class MouvementsComponent implements OnInit {
   private api = inject(ApiService);
   private spinner = inject(NgxSpinnerService);
+  private importUiBlock = inject(ImportUiBlockService);
+  readonly importSocket = inject(ImportSocketService);
 
   mouvements = signal<any[]>([]);
   error = signal('');
@@ -28,6 +32,9 @@ export class MouvementsComponent implements OnInit {
   pageNumbers = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
   setPage(p: number) { if (p >= 1 && p <= this.totalPages()) this.page.set(p); }
 
+  /** Overlay progression import CSV (Socket.io) */
+  importingCsv = signal(false);
+
   form = {
     libelle: '',
     reference: '',
@@ -35,6 +42,14 @@ export class MouvementsComponent implements OnInit {
     date: '',
     type_mouvement: 'sortie',
   };
+
+  constructor() {
+    effect((onCleanup) => {
+      if (!this.importingCsv()) return;
+      this.importUiBlock.acquire();
+      onCleanup(() => this.importUiBlock.release());
+    });
+  }
 
   ngOnInit() { this.load(); }
 
@@ -61,22 +76,31 @@ export class MouvementsComponent implements OnInit {
     this.api.deleteMouvement(id).subscribe(() => this.load());
   }
 
-  onCsvSelect(event: Event) {
+  async onCsvSelect(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
     this.error.set('');
-    this.spinner.show('mouvements');
+    this.importSocket.clearProgress();
+    try {
+      await this.importSocket.ensureSocket();
+    } catch {
+      /* progression impossible sans socket ; l’import HTTP peut quand même réussir */
+    }
+
+    this.importingCsv.set(true);
     this.api.importMouvementsCsv(file).subscribe({
       next: (res) => {
-        this.spinner.hide('mouvements');
+        this.importingCsv.set(false);
+        this.importSocket.clearProgress();
         this.load();
         const w = res.warnings?.length ? ` (${res.warnings.length} ligne(s) ignorée(s))` : '';
         alert(`Import : ${res.count} mouvement(s) ajouté(s)${w}.`);
       },
       error: (err) => {
-        this.spinner.hide('mouvements');
+        this.importingCsv.set(false);
+        this.importSocket.clearProgress();
         const msg = err.error?.error || err.error?.parseErrors?.join?.('\n') || 'Import CSV échoué';
         this.error.set(typeof msg === 'string' ? msg : JSON.stringify(err.error));
       },

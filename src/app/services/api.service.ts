@@ -37,6 +37,24 @@ export interface AIQueryHistoryTurn {
   timelineMeta?: AIQueryTimelineMeta;
 }
 
+export type PendingListItem = {
+  id: string;
+  pendingKind: 'classification' | 'duplicate' | string;
+  fileName?: string;
+  docType?: string;
+  reference?: string;
+  fournisseur?: string;
+  date?: string;
+  montant?: number | null;
+  similarity?: {
+    duplicateId: string;
+    confidence: number;
+    reason: string;
+    existingFileName?: string;
+  } | null;
+  pendingDocument?: Record<string, unknown>;
+};
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private http = inject(HttpClient);
@@ -53,7 +71,10 @@ export class ApiService {
     return this.http.post(`${BASE}/documents/upload`, fd);
   }
   /** Plusieurs PDF : multer + extraction + classifieur + regroupement dossiers (scenarioId) côté serveur */
-  uploadDocumentsBatch(files: File[], docType?: string): Observable<{
+  uploadDocumentsBatch(
+    files: File[],
+    docType?: string
+  ): Observable<{
     success: boolean;
     fileCount: number;
     results: unknown[];
@@ -78,6 +99,10 @@ export class ApiService {
     return this.http.post(`${BASE}/documents/replace/${pendingId}/${existingId}`, {});
   }
   cancelPending(pendingId: string): Observable<any> { return this.http.delete(`${BASE}/documents/pending/${pendingId}`); }
+  /** Imports provisoires (classification / doublon) — sans texte brut côté liste. */
+  getPendingList(): Observable<{ items: PendingListItem[] }> {
+    return this.http.get<{ items: PendingListItem[] }>(`${BASE}/documents/pending-list`);
+  }
   getDocumentPdfUrl(id: string): string { return `${BASE}/documents/${id}/pdf`; }
   getPendingPdfUrl(pendingId: string): string { return `${BASE}/documents/pending/${pendingId}/pdf`; }
   deleteDocument(id: string): Observable<any> { return this.http.delete(`${BASE}/documents/${id}`); }
@@ -86,7 +111,7 @@ export class ApiService {
   createMouvement(data: any): Observable<any> { return this.http.post(`${BASE}/mouvements`, data); }
   getMouvements(): Observable<any[]> { return this.http.get<any[]>(`${BASE}/mouvements`); }
   deleteMouvement(id: string): Observable<any> { return this.http.delete(`${BASE}/mouvements/${id}`); }
-  /** Import CSV relevé bancaire (champ file) — détection séparateur et colonnes */
+  /** Import CSV relevé bancaire (champ file) — détection séparateur et colonnes. Progression : Socket.io (broadcast serveur). */
   importMouvementsCsv(file: File): Observable<{
     success: boolean;
     count: number;

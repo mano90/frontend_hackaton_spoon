@@ -1,3 +1,80 @@
+    .import-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000050;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      pointer-events: auto;
+      cursor: wait;
+      touch-action: none;
+    }
+    .import-panel {
+      background: #fff;
+      border-radius: 14px;
+      padding: 1.5rem 1.75rem;
+      min-width: min(420px, 92vw);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+      border: 1px solid #e2e8f0;
+      cursor: default;
+      user-select: text;
+      touch-action: auto;
+    }
+    .import-title {
+      margin: 0 0 1rem 0;
+      font-size: 1.05rem;
+      color: #1e293b;
+      font-weight: 700;
+    }
+    .import-title i { color: #6366f1; margin-right: 0.45rem; }
+    .import-msg {
+      margin: 0 0 0.75rem 0;
+      font-size: 0.9rem;
+      color: #475569;
+      line-height: 1.45;
+    }
+    .import-msg--err { color: #dc2626; font-weight: 600; }
+    .import-bar {
+      height: 10px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+    .import-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      transition: width 0.2s ease-out;
+    }
+    .import-bar-fill--indeterminate {
+      width: 40% !important;
+      animation: importIndet 1s ease-in-out infinite;
+    }
+    @keyframes importIndet {
+      0% { transform: translateX(-30%); }
+      100% { transform: translateX(250%); }
+    }
+    .import-pct {
+      margin: 0;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #6366f1;
+    }
+    .import-count {
+      margin: 0.35rem 0 0 0;
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+    .btn-csv:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
     .page { padding: 2rem; max-width: 1200px; margin: 0 auto; }
     h1 { font-size: 1.8rem; margin-bottom: 1.5rem; color: #1e293b; }
 

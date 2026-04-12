@@ -1,5 +1,26 @@
     <ngx-spinner name="mouvements" type="ball-clip-rotate" size="medium" color="#6366f1"></ngx-spinner>
 
+    @if (importingCsv()) {
+      <div class="import-overlay" role="alertdialog" aria-busy="true" aria-live="polite">
+        <div class="import-panel">
+          <h4 class="import-title"><i class="fas fa-cloud-upload-alt"></i> Import CSV</h4>
+          @if (importSocket.progress(); as pr) {
+            <p class="import-msg" [class.import-msg--err]="pr.phase === 'error'">{{ pr.message }}</p>
+            <div class="import-bar" aria-hidden="true">
+              <div class="import-bar-fill" [style.width.%]="pr.percent"></div>
+            </div>
+            <p class="import-pct">{{ pr.percent | number:'1.0-0' }} %</p>
+            @if (pr.current != null && pr.total != null) {
+              <p class="import-count">{{ pr.current }} / {{ pr.total }}</p>
+            }
+          } @else {
+            <p class="import-msg">Préparation…</p>
+            <div class="import-bar"><div class="import-bar-fill import-bar-fill--indeterminate"></div></div>
+          }
+        </div>
+      </div>
+    }
+
     <div class="page">
       <h1>Mouvements Bancaires</h1>
 
@@ -13,7 +34,7 @@
           (change)="onCsvSelect($event)"
           hidden
         />
-        <button type="button" class="btn-csv" (click)="csvInput.click()">
+        <button type="button" class="btn-csv" (click)="csvInput.click()" [disabled]="importingCsv()">
           <i class="fas fa-upload"></i> Choisir un CSV
         </button>
       </div>
