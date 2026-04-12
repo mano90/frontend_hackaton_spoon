@@ -182,7 +182,7 @@
   </div>
 
   <div class="query-box">
-    <textarea [(ngModel)]="queryText" placeholder="Ex: Quelles factures correspondent à la sortie de 1500€ du 15 mars ?"
+    <textarea [(ngModel)]="queryText" placeholder="Ex: Résume le dossier S01 (étapes, anomalies). Ou : Quelles factures pour 1500 € le 15 mars ?"
               rows="3" (keydown.control.enter)="ask()"></textarea>
     <button
       class="btn-ask"
@@ -298,6 +298,58 @@
               </details>
             } @else {
               <p class="answer-plain">{{ item.answer }}</p>
+            }
+            @if (item.dossierBriefs?.length) {
+              <div class="dossier-briefs" role="region" aria-label="Synthèse dossier">
+                @for (b of item.dossierBriefs!; track $index) {
+                  <article class="dossier-brief-card">
+                    <header class="dossier-brief-head">
+                      <i class="fas fa-folder-open" aria-hidden="true"></i>
+                      <div class="dossier-brief-head-text">
+                        <span class="dossier-brief-title">Synthèse du dossier</span>
+                        @if (b.libelle || b.scenarioId) {
+                          <span class="dossier-brief-sub">
+                            @if (b.libelle) { {{ b.libelle }} }
+                            @if (b.libelle && b.scenarioId) { · }
+                            @if (b.scenarioId) { <code>{{ b.scenarioId }}</code> }
+                          </span>
+                        }
+                      </div>
+                    </header>
+                    <p class="dossier-brief-resume">{{ b.resume }}</p>
+                    @if (b.etapes?.length) {
+                      <div class="dossier-brief-section">
+                        <h4 class="dossier-brief-h"><i class="fas fa-list-ol"></i> Étapes / pièces</h4>
+                        <ul class="dossier-brief-list">
+                          @for (e of b.etapes!; track $index) {
+                            <li>{{ e }}</li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                    @if (b.anomalies?.length) {
+                      <div class="dossier-brief-section dossier-brief-section--warn">
+                        <h4 class="dossier-brief-h"><i class="fas fa-exclamation-triangle"></i> Anomalies & alertes</h4>
+                        <ul class="dossier-brief-list">
+                          @for (a of b.anomalies!; track $index) {
+                            <li>{{ a }}</li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                    @if (b.pistes?.length) {
+                      <div class="dossier-brief-section dossier-brief-section--hint">
+                        <h4 class="dossier-brief-h"><i class="fas fa-lightbulb"></i> Pistes</h4>
+                        <ul class="dossier-brief-list">
+                          @for (p of b.pistes!; track $index) {
+                            <li>{{ p }}</li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                  </article>
+                }
+              </div>
             }
             @if (item.sources && item.sources.length) {
               <div class="sources">
