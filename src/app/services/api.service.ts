@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -86,8 +86,11 @@ export class ApiService {
   createMouvement(data: any): Observable<any> { return this.http.post(`${BASE}/mouvements`, data); }
   getMouvements(): Observable<any[]> { return this.http.get<any[]>(`${BASE}/mouvements`); }
   deleteMouvement(id: string): Observable<any> { return this.http.delete(`${BASE}/mouvements/${id}`); }
-  /** Import CSV relevé bancaire (champ file) — détection séparateur et colonnes */
-  importMouvementsCsv(file: File): Observable<{
+  /** Import CSV relevé bancaire (champ file) — détection séparateur et colonnes. `socketId` : progression temps réel (Socket.io). */
+  importMouvementsCsv(
+    file: File,
+    socketId?: string
+  ): Observable<{
     success: boolean;
     count: number;
     mouvements: unknown[];
@@ -96,13 +99,17 @@ export class ApiService {
   }> {
     const fd = new FormData();
     fd.append('file', file, file.name);
+    if (socketId) fd.append('socketId', socketId);
+    const headers = socketId
+      ? new HttpHeaders({ 'x-import-socket-id': socketId })
+      : undefined;
     return this.http.post<{
       success: boolean;
       count: number;
       mouvements: unknown[];
       warnings?: string[];
       headersDetected?: string[];
-    }>(`${BASE}/mouvements/import-csv`, fd);
+    }>(`${BASE}/mouvements/import-csv`, fd, { headers });
   }
 
   // Rapprochement
