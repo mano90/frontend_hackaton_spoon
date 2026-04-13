@@ -2,7 +2,7 @@ import { Component, OnInit, AfterViewInit, inject, signal, computed } from '@ang
 declare const Vivus: any;
 import { CommonModule } from '@angular/common';
 import { NgxSpinnerModule } from 'ngx-spinner';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, forkJoin } from 'rxjs';
 import { ApiService } from '../../services/api.service';
 
 @Component({
@@ -16,8 +16,13 @@ export class RapprochementComponent implements OnInit, AfterViewInit {
   private api = inject(ApiService);
 
   rapprochements = signal<any[]>([]);
+  mouvementsMap = signal<Record<string, any>>({});
+  facturesMap = signal<Record<string, any>>({});
   running = signal(false);
   error = signal('');
+
+  drawerFacture = signal<any>(null);
+  drawerOpen = signal(false);
 
   progressTotal = signal(0);
   progressCurrent = signal(0);
@@ -41,9 +46,39 @@ export class RapprochementComponent implements OnInit, AfterViewInit {
   }
 
   load() {
-    this.api.getRapprochements().subscribe({
-      next: (data) => this.rapprochements.set(data),
+    forkJoin({
+      rapprochements: this.api.getRapprochements(),
+      mouvements: this.api.getMouvements(),
+      documents: this.api.getDocuments(),
+    }).subscribe({
+      next: ({ rapprochements, mouvements, documents }) => {
+        this.rapprochements.set(rapprochements);
+        this.mouvementsMap.set(Object.fromEntries(mouvements.map((m: any) => [m.id, m])));
+        const factures = documents.filter((d: any) => d.docType === 'facture' || d.type === 'facture');
+        this.facturesMap.set(Object.fromEntries(factures.map((f: any) => [f.id, f])));
+      },
     });
+  }
+
+  getMouvement(id: string): any {
+    return this.mouvementsMap()[id] ?? null;
+  }
+
+  openDrawer(factureId: string) {
+    const cached = this.facturesMap()[factureId];
+    if (cached) {
+      this.drawerFacture.set(cached);
+      this.drawerOpen.set(true);
+    } else {
+      this.api.getDocument(factureId).subscribe({
+        next: (doc) => { this.drawerFacture.set(doc); this.drawerOpen.set(true); },
+      });
+    }
+  }
+
+  closeDrawer() {
+    this.drawerOpen.set(false);
+    setTimeout(() => this.drawerFacture.set(null), 300);
   }
 
   confirm(id: string) {
@@ -64,17 +99,15 @@ export class RapprochementComponent implements OnInit, AfterViewInit {
     this.progressCurrentLabel.set('Recuperation des mouvements...');
 
     try {
-      // Get all sortie mouvement IDs
       const { ids } = await firstValueFrom(this.api.getSortieIds());
       this.progressTotal.set(ids.length);
 
       if (ids.length === 0) {
         this.running.set(false);
-        this.error.set('Aucun mouvement de type sortie a traiter.');
+        this.error.set('Aucun mouvement a traiter.');
         return;
       }
 
-      // Process one by one
       for (let i = 0; i < ids.length; i++) {
         this.progressCurrentLabel.set(`Analyse du mouvement ${i + 1} / ${ids.length}...`);
         try {
@@ -92,7 +125,6 @@ export class RapprochementComponent implements OnInit, AfterViewInit {
       }
 
       this.progressCurrentLabel.set('Termine !');
-      // Brief pause so user sees 100%
       await new Promise(r => setTimeout(r, 800));
       this.running.set(false);
       this.load();

@@ -117,6 +117,7 @@ export class ApiService {
   getDocumentPdfUrl(id: string): string { return `${BASE}/documents/${id}/pdf`; }
   getPendingPdfUrl(pendingId: string): string { return `${BASE}/documents/pending/${pendingId}/pdf`; }
   deleteDocument(id: string): Observable<any> { return this.http.delete(`${BASE}/documents/${id}`); }
+  getDocument(id: string): Observable<any> { return this.http.get<any>(`${BASE}/documents/${id}`); }
 
   // Mouvements
   createMouvement(data: any): Observable<any> { return this.http.post(`${BASE}/mouvements`, data); }
@@ -142,7 +143,7 @@ export class ApiService {
   }
 
   // Rapprochement
-  getSortieIds(): Observable<{ ids: string[]; count: number }> { return this.http.get<{ ids: string[]; count: number }>(`${BASE}/rapprochement/sortie-ids`); }
+  getSortieIds(): Observable<{ ids: string[]; count: number }> { return this.http.get<{ ids: string[]; count: number }>(`${BASE}/rapprochement/mouvement-ids`); }
   runRapprochement(mouvementId: string): Observable<any> { return this.http.post(`${BASE}/rapprochement/run/${mouvementId}`, {}); }
   runAllRapprochements(): Observable<any> { return this.http.post(`${BASE}/rapprochement/run-all`, {}); }
   getRapprochements(): Observable<any[]> { return this.http.get<any[]>(`${BASE}/rapprochement`); }
@@ -187,6 +188,11 @@ export class ApiService {
       .post(`${BASE}/query/reset`, { sessionId }, { responseType: 'text' })
       .pipe(map(() => undefined));
   }
+
+  // Config rapprochement
+  getConfig(): Observable<{ config: any; defaults: any }> { return this.http.get<{ config: any; defaults: any }>(`${BASE}/config`); }
+  updateConfig(config: any): Observable<{ success: boolean; config: any }> { return this.http.put<{ success: boolean; config: any }>(`${BASE}/config`, config); }
+  resetConfig(): Observable<{ success: boolean; config: any }> { return this.http.post<{ success: boolean; config: any }>(`${BASE}/config/reset`, {}); }
 
   // Stats
   getStats(): Observable<any> { return this.http.get(`${BASE}/stats`); }

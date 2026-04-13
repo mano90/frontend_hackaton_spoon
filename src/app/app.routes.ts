@@ -9,4 +9,5 @@ export const routes: Routes = [
   { path: 'timeline', loadComponent: () => import('./pages/timeline/timeline').then(m => m.TimelineComponent) },
   { path: 'query', loadComponent: () => import('./pages/query/query').then(m => m.QueryComponent) },
   { path: 'svg-test', loadComponent: () => import('./pages/svg-test/svg-test').then(m => m.SvgTestComponent) },
+  { path: 'config', loadComponent: () => import('./pages/config/config').then(m => m.ConfigComponent) },
 ];

@@ -1,4 +1,4 @@
-    <div class="page">
+    <div class="page" [class.drawer-open]="drawerOpen()">
       <h1>Rapprochement Bancaire</h1>
 
       <div class="actions">
@@ -60,48 +60,81 @@
 
       <div class="results">
         @for (r of rapprochements(); track r.id) {
+          @let mouvement = getMouvement(r.mouvementId);
           <div class="result-card" [class.exact]="r.status === 'exact'"
                [class.partial]="r.status === 'partial'" [class.no-match]="r.status === 'no_match'">
+
+            <!-- Header : statut + écart -->
             <div class="result-header">
               <span class="status-badge" [class]="r.status">
-                {{ r.status === 'exact' ? 'Correspondance exacte' : r.status === 'partial' ? 'Correspondance partielle' : 'Aucune correspondance' }}
+                @if (r.status === 'exact') { <i class="fas fa-check-circle"></i> Correspondance exacte }
+                @else if (r.status === 'partial') { <i class="fas fa-adjust"></i> Correspondance partielle }
+                @else { <i class="fas fa-times-circle"></i> Aucune correspondance }
               </span>
-              <span class="ecart" *ngIf="r.ecart !== 0">Ecart: {{ r.ecart | number:'1.2-2' }} EUR</span>
+              @if (r.ecart !== 0) {
+                <span class="ecart"><i class="fas fa-exclamation-triangle"></i> Écart : {{ r.ecart | number:'1.2-2' }} EUR</span>
+              }
             </div>
 
-            <div class="result-body">
-              <div class="amounts">
-                <div class="amount-item">
-                  <span class="label">Mouvement:</span>
-                  <span class="value sortie">{{ r.montantMouvement | number:'1.2-2' }} EUR</span>
-                </div>
-                <div class="amount-item">
-                  <span class="label">Factures:</span>
-                  <span class="value">{{ r.montantFactures | number:'1.2-2' }} EUR</span>
-                </div>
-              </div>
-
-              <div class="ai-explanation">
-                <strong>Analyse IA:</strong>
-                <p>{{ r.aiExplanation }}</p>
-              </div>
-
-              @if (r.factureIds?.length) {
-                <div class="matched-factures">
-                  <strong>Factures associees:</strong>
-                  <span class="facture-id" *ngFor="let fid of r.factureIds">{{ fid | slice:0:8 }}...</span>
-                </div>
-              }
-
-              <div class="confirm-actions">
-                @if (r.confirmed) {
-                  <span class="confirmed-badge">Confirme</span>
+            <!-- Transaction bancaire -->
+            <div class="transaction-row">
+              <div class="transaction-main">
+                @if (mouvement) {
+                  <span class="type-badge" [class.type-sortie]="mouvement.type_mouvement === 'sortie'"
+                                           [class.type-entree]="mouvement.type_mouvement === 'entree'">
+                    @if (mouvement.type_mouvement === 'sortie') {
+                      <i class="fas fa-arrow-up"></i> Sortie
+                    } @else {
+                      <i class="fas fa-arrow-down"></i> Entrée
+                    }
+                  </span>
+                  <span class="transaction-libelle">{{ mouvement.libelle }}</span>
+                  <span class="transaction-date"><i class="fas fa-calendar-alt"></i> {{ mouvement.date }}</span>
                 } @else {
-                  <button class="btn-confirm" (click)="confirm(r.id)"><i class="fas fa-check"></i> Confirmer</button>
-                  <button class="btn-reject" (click)="reject(r.id)"><i class="fas fa-times"></i> Rejeter</button>
+                  <span class="transaction-libelle transaction-libelle--unknown">
+                    <i class="fas fa-question-circle"></i> {{ r.mouvementId | slice:0:8 }}...
+                  </span>
+                }
+              </div>
+              <div class="transaction-amounts">
+                <span class="mouvement-amount" [class.amount-sortie]="mouvement?.type_mouvement === 'sortie'"
+                                               [class.amount-entree]="mouvement?.type_mouvement === 'entree'">
+                  {{ r.montantMouvement | number:'1.2-2' }} EUR
+                </span>
+                @if (r.factureIds?.length) {
+                  <span class="amount-separator"><i class="fas fa-arrows-alt-h"></i></span>
+                  <span class="factures-amount">{{ r.montantFactures | number:'1.2-2' }} EUR</span>
                 }
               </div>
             </div>
+
+            <!-- Factures liées -->
+            @if (r.factureIds?.length) {
+              <div class="factures-row">
+                <span class="factures-label"><i class="fas fa-file-invoice"></i> Facture(s) :</span>
+                @for (fid of r.factureIds; track fid) {
+                  @let fac = facturesMap()[fid];
+                  <button class="facture-chip" (click)="openDrawer(fid)" title="Voir les détails de la facture">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    @if (fac) {
+                      {{ fac.reference || (fid | slice:0:8) + '...' }}
+                      <span class="chip-amount">{{ fac.montant | number:'1.2-2' }} EUR</span>
+                    } @else {
+                      {{ fid | slice:0:8 }}...
+                    }
+                    <i class="fas fa-chevron-right chip-arrow"></i>
+                  </button>
+                }
+              </div>
+            }
+
+            <!-- Analyse IA -->
+            <div class="ai-explanation">
+              <i class="fas fa-robot"></i> <strong>Analyse IA :</strong>
+              <p>{{ r.aiExplanation }}</p>
+            </div>
+
+
           </div>
         } @empty {
           <div class="empty-state">
@@ -115,9 +148,68 @@
                 <circle cx="100" cy="155" r="28"/><polyline points="87,155 96,165 115,143" stroke-width="4"/>
               </svg>
             </div>
-            <p>Aucun rapprochement effectue.</p>
+            <p>Aucun rapprochement effectué.</p>
             <p>Importez des factures et des mouvements bancaires, puis lancez le rapprochement.</p>
           </div>
         }
       </div>
     </div>
+
+    <!-- Tiroir facture -->
+    @if (drawerFacture()) {
+      <div class="drawer-backdrop" [class.open]="drawerOpen()" (click)="closeDrawer()"></div>
+      <aside class="drawer" [class.open]="drawerOpen()">
+        <div class="drawer-header">
+          <div class="drawer-title">
+            <i class="fas fa-file-invoice-dollar"></i>
+            <span>Détails de la facture</span>
+          </div>
+          <button class="drawer-close" (click)="closeDrawer()" title="Fermer">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="drawer-body">
+          @let f = drawerFacture();
+
+          <div class="drawer-section">
+            <div class="drawer-field">
+              <span class="drawer-field-label">Référence</span>
+              <span class="drawer-field-value drawer-field-value--ref">{{ f.reference || '—' }}</span>
+            </div>
+            <div class="drawer-field">
+              <span class="drawer-field-label">Fournisseur</span>
+              <span class="drawer-field-value">{{ f.fournisseur || '—' }}</span>
+            </div>
+            <div class="drawer-field">
+              <span class="drawer-field-label">Date</span>
+              <span class="drawer-field-value">{{ f.date || '—' }}</span>
+            </div>
+            <div class="drawer-field">
+              <span class="drawer-field-label">Montant TTC</span>
+              <span class="drawer-field-value drawer-field-value--amount">{{ f.montant | number:'1.2-2' }} EUR</span>
+            </div>
+            @if (f.fileName) {
+              <div class="drawer-field">
+                <span class="drawer-field-label">Fichier</span>
+                <span class="drawer-field-value">{{ f.fileName }}</span>
+              </div>
+            }
+            @if (f.scenarioId) {
+              <div class="drawer-field">
+                <span class="drawer-field-label">Scénario</span>
+                <span class="drawer-field-value">{{ f.scenarioId }}</span>
+              </div>
+            }
+          </div>
+
+          @if (f.id) {
+            <div class="drawer-actions">
+              <a class="drawer-btn-pdf" [href]="'/api/documents/' + f.id + '/pdf'" target="_blank">
+                <i class="fas fa-file-pdf"></i> Voir le PDF
+              </a>
+            </div>
+          }
+        </div>
+      </aside>
+    }
