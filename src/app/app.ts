@@ -69,6 +69,12 @@ import { PendingAlertsService } from './services/pending-alerts.service';
               <i class="fas fa-pen-nib"></i><span class="link-text">SVG Animations</span>
             </a>
           </li>
+          <li class="nav-section"><span class="section-text">Paramètres</span></li>
+          <li>
+            <a routerLink="/config" routerLinkActive="active" [attr.title]="layout.sidebarCollapsed() ? 'Tolérance' : null">
+              <i class="fas fa-sliders-h"></i><span class="link-text">Tolérance</span>
+            </a>
+          </li>
         </ul>
       </nav>
       <main class="content">

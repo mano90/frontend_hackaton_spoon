@@ -60,6 +60,8 @@ export class DocumentsComponent implements OnInit, OnDestroy, AfterViewInit {
   spinnerMsg = signal('Chargement...');
   pdfUrl = signal<string | null>(null);
   pdfDocName = signal('');
+  detailDoc = signal<any>(null);
+  detailOpen = signal(false);
   classifyInfo = signal<any>(null);
   duplicateInfo = signal<any>(null);
   pendingPdfUrl = signal<string | null>(null);
@@ -495,6 +497,12 @@ export class DocumentsComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!info) return;
     this.api.cancelPending(info.pendingDocument.id).subscribe(() => this.duplicateInfo.set(null));
   }
+
+  openDetail(doc: any) {
+    this.detailDoc.set(doc);
+    this.detailOpen.set(true);
+  }
+  closeDetail() { this.detailOpen.set(false); }
 
   viewPdf(id: string) {
     this.layout.collapseSidebar();

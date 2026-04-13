@@ -5,7 +5,8 @@
 
 .app-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 /** Voile plein écran (sibling après le layout) — bloque sidebar + contenu, comme Bootstrap .modal-backdrop */
@@ -28,7 +29,9 @@
   padding: 1.5rem 0;
   flex-shrink: 0;
   transition: width 0.2s ease;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: 100vh;
 }
 
 .logo {

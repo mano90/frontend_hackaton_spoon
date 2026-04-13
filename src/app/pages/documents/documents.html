@@ -199,6 +199,7 @@
                     @if (d.hasRelation === true) { <span class="badge-rel">{{ d.relationType }}</span> }
                   </td>
                   <td class="actions">
+                    <button class="btn-info" (click)="openDetail(d)" title="Détails"><i class="fas fa-info-circle"></i></button>
                     <button class="btn-view" (click)="viewPdf(d.id)" title="Voir PDF"><i class="fas fa-file-pdf"></i></button>
                     <button class="btn-delete" (click)="remove(d.id)" title="Supprimer"><i class="fas fa-trash-alt"></i></button>
                   </td>
@@ -419,6 +420,96 @@
               </button>
             </footer>
           </div>
+        </div>
+      </div>
+    }
+
+    <!-- Tiroir détails document -->
+    @if (detailOpen() && detailDoc(); as doc) {
+      <div class="doc-drawer-backdrop" (click)="closeDetail()"></div>
+      <div class="doc-drawer" role="dialog" aria-label="Détails du document">
+        <div class="doc-drawer__header">
+          <span class="doc-drawer__title">
+            <i class="fas {{ getIcon(doc.docType || doc.type) }}"></i>
+            {{ getLabel(doc.docType || doc.type) }} — {{ doc.reference || doc.subject || doc.fileName || doc.id }}
+          </span>
+          <button type="button" class="doc-drawer__close" (click)="closeDetail()" aria-label="Fermer">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="doc-drawer__body">
+
+          <div class="doc-drawer__section">
+            <h3 class="doc-drawer__section-title">Identification</h3>
+            <dl class="doc-drawer__fields">
+              <div class="doc-drawer__field">
+                <dt>Type</dt>
+                <dd><span class="type-badge" [attr.data-type]="doc.docType || doc.type">{{ getLabel(doc.docType || doc.type) }}</span></dd>
+              </div>
+              <div class="doc-drawer__field">
+                <dt>Référence / Objet</dt>
+                <dd>{{ doc.reference || doc.subject || '—' }}</dd>
+              </div>
+              <div class="doc-drawer__field">
+                <dt>Fichier source</dt>
+                <dd>{{ doc.fileName || '—' }}</dd>
+              </div>
+              @if (doc.id) {
+                <div class="doc-drawer__field">
+                  <dt>ID interne</dt>
+                  <dd class="doc-drawer__id">{{ doc.id }}</dd>
+                </div>
+              }
+            </dl>
+          </div>
+
+          <div class="doc-drawer__section">
+            <h3 class="doc-drawer__section-title">Données extraites</h3>
+            <dl class="doc-drawer__fields">
+              <div class="doc-drawer__field">
+                <dt>Fournisseur / Expéditeur</dt>
+                <dd>{{ doc.fournisseur || doc.from || '—' }}</dd>
+              </div>
+              @if (doc.destinataire || doc.to) {
+                <div class="doc-drawer__field">
+                  <dt>Destinataire</dt>
+                  <dd>{{ doc.destinataire || doc.to }}</dd>
+                </div>
+              }
+              <div class="doc-drawer__field">
+                <dt>Date</dt>
+                <dd>{{ doc.date || '—' }}</dd>
+              </div>
+              <div class="doc-drawer__field">
+                <dt>Montant</dt>
+                <dd>{{ doc.montant != null ? (doc.montant | number:'1.2-2') + ' EUR' : '—' }}</dd>
+              </div>
+              @if (doc.scenarioId) {
+                <div class="doc-drawer__field">
+                  <dt>Dossier (parcours)</dt>
+                  <dd><span class="badge-scenario">{{ doc.scenarioId }}</span></dd>
+                </div>
+              }
+              <div class="doc-drawer__field">
+                <dt>Importé le</dt>
+                <dd>{{ doc.createdAt ? (doc.createdAt | date:'dd/MM/yyyy HH:mm') : '—' }}</dd>
+              </div>
+            </dl>
+          </div>
+
+          @if (doc.rawText) {
+            <div class="doc-drawer__section">
+              <h3 class="doc-drawer__section-title">Contenu extrait (texte brut)</h3>
+              <pre class="doc-drawer__raw">{{ doc.rawText }}</pre>
+            </div>
+          }
+
+          <div class="doc-drawer__actions">
+            <button type="button" class="btn-view" (click)="viewPdf(doc.id); closeDetail()" title="Voir le PDF">
+              <i class="fas fa-file-pdf"></i> Voir le PDF
+            </button>
+          </div>
+
         </div>
       </div>
     }
