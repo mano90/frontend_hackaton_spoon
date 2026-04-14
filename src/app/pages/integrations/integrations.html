@@ -1,0 +1,266 @@
+<div class="integrations-page">
+  <div class="integrations-header">
+    <h1><i class="fas fa-cog"></i> Intégrations</h1>
+    <p class="integrations-subtitle">
+      Connectez vos systèmes externes pour importer automatiquement vos données.
+    </p>
+  </div>
+
+  @if (error()) {
+    <div class="integrations-alert integrations-alert--error">
+      <i class="fas fa-exclamation-circle"></i> {{ error() }}
+    </div>
+  }
+  @if (success()) {
+    <div class="integrations-alert integrations-alert--success">
+      <i class="fas fa-check-circle"></i> {{ success() }}
+    </div>
+  }
+
+  <div class="integrations-cards">
+    <!-- SALESFORCE -->
+    <div class="integration-card">
+      <div class="integration-card__header">
+        <div class="integration-card__icon integration-card__icon--sf">
+          <i class="fab fa-salesforce"></i>
+        </div>
+        <div class="integration-card__title">
+          <h2>Salesforce</h2>
+          <p>OAuth 2.0 — Client Credentials Flow (server-to-server).</p>
+        </div>
+        @if (status()?.connected) {
+          <span class="integration-card__status integration-card__status--ok">
+            <i class="fas fa-circle"></i> Connecté
+          </span>
+        } @else {
+          <span class="integration-card__status integration-card__status--off">
+            <i class="fas fa-circle"></i> Non connecté
+          </span>
+        }
+      </div>
+
+      <div class="integration-card__body">
+        @if (status()?.connected) {
+          @if (status()?.username) {
+            <div class="integration-detail">
+              <span class="integration-detail__label">Run As user</span>
+              <span class="integration-detail__value">{{ status()?.username }}</span>
+            </div>
+          }
+          <div class="integration-detail">
+            <span class="integration-detail__label">Org</span>
+            <span class="integration-detail__value">
+              {{ status()?.env === 'sandbox' ? 'Sandbox (test)' : 'Production' }}
+            </span>
+          </div>
+          <div class="integration-detail">
+            <span class="integration-detail__label">Instance</span>
+            <span class="integration-detail__value">{{ status()?.instanceUrl }}</span>
+          </div>
+          <div class="integration-detail">
+            <span class="integration-detail__label">Connecté le</span>
+            <span class="integration-detail__value">{{ status()?.issuedAt | date: 'short' }}</span>
+          </div>
+        } @else {
+          <div class="integration-detail">
+            <span class="integration-detail__label">Client ID (.env)</span>
+            <span class="integration-detail__value">
+              {{ envDefaults?.hasClientId ? '✓ défini' : '✗ manquant' }}
+            </span>
+          </div>
+          <div class="integration-detail">
+            <span class="integration-detail__label">Client Secret (.env)</span>
+            <span class="integration-detail__value">
+              {{ envDefaults?.hasClientSecret ? '✓ défini' : '✗ manquant' }}
+            </span>
+          </div>
+          <div class="integration-detail">
+            <span class="integration-detail__label">Environnement</span>
+            <span class="integration-detail__value">
+              {{ form.env === 'sandbox' ? 'Sandbox' : 'Production' }}
+              @if (form.loginUrl) {
+                — {{ form.loginUrl }}
+              }
+            </span>
+          </div>
+
+          @if (credsMissing) {
+            <div class="integrations-alert integrations-alert--error" style="margin-top:0.75rem;">
+              <i class="fas fa-exclamation-circle"></i>
+              Renseignez <code>SF_CLIENT_ID</code> et <code>SF_CLIENT_SECRET</code> dans
+              le fichier <code>.env</code> du backend, puis redémarrez le serveur.
+            </div>
+          } @else {
+            <p class="integration-card__hint">
+              Le Consumer Key / Secret sont lus depuis le <code>.env</code>. Assurez-vous
+              que votre Connected App a <strong>“Enable Client Credentials Flow”</strong>
+              coché et un utilisateur <strong>“Run As”</strong> sélectionné.
+            </p>
+          }
+
+          @if (overrideOpen()) {
+            <div class="override-box">
+              <div class="form-row">
+                <label>Environnement</label>
+                <select [(ngModel)]="form.env" name="env">
+                  <option value="sandbox">Sandbox (test.salesforce.com)</option>
+                  <option value="production">Production (login.salesforce.com)</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>
+                  Login URL <span class="form-row__opt">(optionnel — My Domain)</span>
+                </label>
+                <input
+                  type="url"
+                  [(ngModel)]="form.loginUrl"
+                  name="loginUrl"
+                  placeholder="https://mon-org--sandbox.sandbox.my.salesforce.com"
+                />
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="integration-card__actions">
+        @if (status()?.connected) {
+          <button type="button" class="btn btn-secondary" (click)="loadSObjects()" [disabled]="sObjectsLoading()">
+            @if (sObjectsLoading()) {
+              <i class="fas fa-spinner fa-spin"></i> Chargement…
+            } @else {
+              <i class="fas fa-database"></i> Lister les objets
+            }
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="connect()" [disabled]="connecting()">
+            @if (connecting()) {
+              <i class="fas fa-spinner fa-spin"></i> …
+            } @else {
+              <i class="fas fa-sync-alt"></i> Reconnecter
+            }
+          </button>
+          <button type="button" class="btn btn-danger" (click)="disconnect()">
+            <i class="fas fa-unlink"></i> Déconnecter
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            (click)="overrideOpen.update(v => !v)"
+          >
+            <i class="fas fa-sliders-h"></i>
+            {{ overrideOpen() ? 'Masquer' : 'Options' }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="connect()"
+            [disabled]="connecting() || credsMissing"
+          >
+            @if (connecting()) {
+              <i class="fas fa-spinner fa-spin"></i> Connexion…
+            } @else {
+              <i class="fab fa-salesforce"></i> Connecter
+            }
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- ERP (disabled) -->
+    <div class="integration-card integration-card--disabled">
+      <div class="integration-card__header">
+        <div class="integration-card__icon integration-card__icon--erp">
+          <i class="fas fa-industry"></i>
+        </div>
+        <div class="integration-card__title">
+          <h2>ERP</h2>
+          <p>Connexion à un ERP externe — bientôt disponible.</p>
+        </div>
+        <span class="integration-card__status integration-card__status--soon">
+          <i class="fas fa-clock"></i> Bientôt
+        </span>
+      </div>
+      <div class="integration-card__actions">
+        <button type="button" class="btn btn-primary" disabled>
+          <i class="fas fa-plug"></i> Connecter à l'ERP
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOBJECTS PANEL -->
+  @if (sObjects() || sObjectsError()) {
+    <div class="sobjects-panel">
+      <div class="sobjects-panel__header">
+        <h2><i class="fas fa-database"></i> Objets Salesforce</h2>
+        <div class="sobjects-panel__actions">
+          <input
+            type="search"
+            class="sobjects-panel__search"
+            placeholder="Filtrer…"
+            [ngModel]="filter()"
+            (ngModelChange)="filter.set($event)"
+          />
+          <label class="sobjects-panel__checkbox">
+            <input
+              type="checkbox"
+              [ngModel]="onlyCustom()"
+              (ngModelChange)="onlyCustom.set($event)"
+            />
+            <span>Custom uniquement</span>
+          </label>
+          <button type="button" class="btn btn-secondary btn-sm" (click)="clearSObjects()">
+            <i class="fas fa-times"></i> Fermer
+          </button>
+        </div>
+      </div>
+
+      @if (sObjectsError()) {
+        <div class="integrations-alert integrations-alert--error">
+          <i class="fas fa-exclamation-circle"></i> {{ sObjectsError() }}
+        </div>
+      } @else if (sObjects()) {
+        <p class="sobjects-panel__meta">
+          {{ filteredSObjects().length }} / {{ sObjects()?.length }} objets
+        </p>
+        <div class="sobjects-table-wrap">
+          <table class="sobjects-table">
+            <thead>
+              <tr>
+                <th>API Name</th>
+                <th>Label</th>
+                <th>Type</th>
+                <th>Queryable</th>
+                <th>Prefix</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (o of filteredSObjects(); track o.name) {
+                <tr>
+                  <td class="mono">{{ o.name }}</td>
+                  <td>{{ o.label }}</td>
+                  <td>
+                    @if (o.custom) {
+                      <span class="tag tag--custom">custom</span>
+                    } @else {
+                      <span class="tag tag--standard">standard</span>
+                    }
+                  </td>
+                  <td>
+                    @if (o.queryable) {
+                      <i class="fas fa-check text-ok"></i>
+                    } @else {
+                      <i class="fas fa-times text-muted"></i>
+                    }
+                  </td>
+                  <td class="mono">{{ o.keyPrefix || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>
