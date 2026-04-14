@@ -497,6 +497,94 @@
             </dl>
           </div>
 
+          @if ((doc.docType || doc.type) === 'email') {
+            <div class="doc-drawer__section doc-drawer__section--ai">
+              <h3 class="doc-drawer__section-title"><i class="fas fa-robot"></i> Classification email</h3>
+              @if (isEmailAiPending(doc.id)) {
+                <p class="doc-ai-loading"><i class="fas fa-spinner fa-spin"></i> Analyse en cours…</p>
+              } @else if (!doc.aiTags?.length && !doc.sentiment && !(doc.riskFlags?.length) && !doc.entities) {
+                <p class="doc-ai-empty">
+                  @if (doc.subject || doc.body || doc.rawText) {
+                    Résultat indisponible pour le moment.
+                  } @else {
+                    Aucun texte (objet / corps / extrait) pour lancer l’analyse.
+                  }
+                </p>
+              }
+              @if (doc.aiTags?.length || doc.sentiment || doc.urgency || doc.riskFlags?.length || doc.entities) {
+                <dl class="doc-drawer__fields">
+                  @if (doc.aiTags?.length) {
+                    <div class="doc-drawer__field">
+                      <dt>Scénario / tags</dt>
+                      <dd class="doc-ai-tags">
+                        @for (tag of doc.aiTags; track tag) {
+                          <span class="type-badge type-badge--ai-drawer" [attr.data-type]="aiTagToBadgeType(tag)">{{ aiTagLabel(tag) }}</span>
+                        }
+                      </dd>
+                    </div>
+                  }
+                  @if (doc.sentiment) {
+                    <div class="doc-drawer__field">
+                      <dt>Sentiment</dt>
+                      <dd>
+                        <span class="doc-ai-sentiment-badge" [attr.data-sentiment]="sentimentAttr(doc.sentiment)">
+                          {{ doc.sentiment }}
+                        </span>
+                      </dd>
+                    </div>
+                  }
+                  @if (doc.urgency) {
+                    <div class="doc-drawer__field">
+                      <dt>Urgence</dt>
+                      <dd>
+                        <span class="doc-ai-urgency-badge" [attr.data-urgency]="urgencyAttr(doc.urgency)">
+                          @if (doc.urgency === 'high') {
+                            <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                          }
+                          {{ doc.urgency }}
+                        </span>
+                      </dd>
+                    </div>
+                  }
+                  @if (doc.entities && (doc.entities.amount != null || doc.entities.due_date || doc.entities.invoice_id || doc.entities.currency)) {
+                    <div class="doc-drawer__field">
+                      <dt>Montant (extrait)</dt>
+                      <dd>
+                        @if (doc.entities.amount != null) {
+                          {{ doc.entities.amount | number:'1.2-2' }} {{ doc.entities.currency || 'EUR' }}
+                        } @else { — }
+                      </dd>
+                    </div>
+                    <div class="doc-drawer__field">
+                      <dt>Échéance</dt>
+                      <dd>{{ doc.entities.due_date || '—' }}</dd>
+                    </div>
+                    <div class="doc-drawer__field">
+                      <dt>Réf. facture (extrait)</dt>
+                      <dd>{{ doc.entities.invoice_id || '—' }}</dd>
+                    </div>
+                  }
+                  @if (doc.riskFlags?.length) {
+                    <div class="doc-drawer__field">
+                      <dt>Indicateurs de risque</dt>
+                      <dd class="doc-ai-risk-badges">
+                        @for (rf of doc.riskFlags; track rf) {
+                          @let kind = riskBadgeKind(rf);
+                          <span class="doc-ai-risk-badge" [attr.data-risk]="kind">
+                            @if (kind !== 'none') {
+                              <i class="fas fa-exclamation-triangle doc-ai-risk-badge__icon" aria-hidden="true"></i>
+                            }
+                            {{ aiTagLabel(rf) }}
+                          </span>
+                        }
+                      </dd>
+                    </div>
+                  }
+                </dl>
+              }
+            </div>
+          }
+
           @if (doc.rawText) {
             <div class="doc-drawer__section">
               <h3 class="doc-drawer__section-title">Contenu extrait (texte brut)</h3>

@@ -9,6 +9,7 @@ import { LayoutService } from '../../services/layout.service';
 import { ImportSocketService, type DocumentsBatchProgressEvent } from '../../services/import-socket.service';
 import { ImportUiBlockService } from '../../services/import-ui-block.service';
 import { PendingAlertsService } from '../../services/pending-alerts.service';
+import { EmailAnalyzerService, type ProcessedEmail } from '../../services/email-analyzer.service';
 
 declare const Vivus: any;
 
@@ -49,7 +50,10 @@ export class DocumentsComponent implements OnInit, OnDestroy, AfterViewInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private pendingAlerts = inject(PendingAlertsService);
+  private emailAnalyzer = inject(EmailAnalyzerService);
   readonly importSocket = inject(ImportSocketService);
+  /** IDs email dont l’analyse IA est en cours (signal pour le template du tiroir) */
+  readonly emailAnalysisInFlight = signal<ReadonlySet<string>>(new Set());
   /** Exposé au template : true = progression simulée locale (test UI) */
   readonly batchUploadClientDemo = BATCH_UPLOAD_CLIENT_DEMO;
 
@@ -119,6 +123,115 @@ export class DocumentsComponent implements OnInit, OnDestroy, AfterViewInit {
   getIcon(type: string) { return this.iconMap[type] || 'fa-file'; }
   getLabel(type: string) { return this.labelMap[type] || type; }
 
+  /** Tags IA → `data-type` des .type-badge (devis / facture / …) */
+  aiTagToBadgeType(tag: string): string {
+    const t = (tag || '').toLowerCase().replace(/\s+/g, '_');
+    const map: Record<string, string> = {
+      invoice: 'facture',
+      payment_reminder: 'facture',
+      quote: 'devis',
+      kyc: 'bon_reception',
+      general_inquiry: 'email',
+      none: 'email',
+    };
+    return map[t] ?? 'email';
+  }
+
+  aiTagLabel(tag: string): string {
+    return String(tag || '').replace(/_/g, ' ');
+  }
+
+  /** Attribut `data-urgency` pour les pastilles (high | medium | low) */
+  urgencyAttr(urgency: string | undefined): string {
+    return String(urgency || '').toLowerCase().trim();
+  }
+
+  /** Attribut `data-sentiment` pour les pastilles (positive | neutral | negative) */
+  sentimentAttr(sentiment: string | undefined): string {
+    const v = String(sentiment || '').toLowerCase().trim();
+    if (v === 'positive') return 'positive';
+    if (v === 'negative') return 'negative';
+    if (v === 'neutral') return 'neutral';
+    return 'unknown';
+  }
+
+  /** Variante visuelle des pastilles risque (neutre / vigilance / critique) */
+  riskBadgeKind(rf: string): 'none' | 'warn' | 'alert' {
+    const s = String(rf || '').toLowerCase().trim();
+    if (s === 'none') return 'none';
+    if (/(phishing|suspicious|fraud|critical|overdue)/.test(s)) return 'alert';
+    return 'warn';
+  }
+
+  isEmailAiPending(docId: string): boolean {
+    return this.emailAnalysisInFlight().has(docId);
+  }
+
+  private emailContentForAnalysis(doc: any): string {
+    const parts = [doc.subject, doc.body, doc.rawText].filter(
+      (x) => x != null && String(x).trim() !== ''
+    );
+    return parts.join('\n\n').trim();
+  }
+
+  private applyEmailAnalysisToDoc(doc: any, r: ProcessedEmail): any {
+    return {
+      ...doc,
+      aiTags: r.type ?? [],
+      sentiment: r.sentiment,
+      urgency: r.urgency,
+      entities: r.entities,
+      riskFlags: r.risk_flags ?? [],
+      actionRequired: r.action_required ?? [],
+    };
+  }
+
+  private mergeDocIntoState(merged: any): void {
+    this.allDocuments.update((list) => list.map((d) => (d.id === merged.id ? merged : d)));
+    const open = this.detailDoc();
+    if (open?.id === merged.id) {
+      this.detailDoc.set(merged);
+    }
+  }
+
+  private setEmailAnalysisFlight(docId: string, pending: boolean): void {
+    this.emailAnalysisInFlight.update((prev) => {
+      const next = new Set(prev);
+      if (pending) next.add(docId);
+      else next.delete(docId);
+      return next;
+    });
+  }
+
+  /** Analyse IA automatique pour les emails sans tags encore */
+  analyzeEmailIfNeeded(doc: any): void {
+    const type = doc.docType || doc.type;
+    if (type !== 'email') return;
+    if (doc.aiTags?.length) return;
+    const content = this.emailContentForAnalysis(doc);
+    if (!content) return;
+    if (this.emailAnalysisInFlight().has(doc.id)) return;
+
+    this.setEmailAnalysisFlight(doc.id, true);
+    const threadId = doc.thread?.id ?? doc.threadId;
+    this.emailAnalyzer.analyze(doc.id, content, threadId).subscribe({
+      next: (r) => {
+        this.setEmailAnalysisFlight(doc.id, false);
+        const latest = this.allDocuments().find((d) => d.id === doc.id) ?? doc;
+        this.mergeDocIntoState(this.applyEmailAnalysisToDoc(latest, r));
+      },
+      error: () => {
+        this.setEmailAnalysisFlight(doc.id, false);
+      },
+    });
+  }
+
+  private runEmailAnalysisForLoadedEmails(docs: any[]): void {
+    for (const d of docs) {
+      this.analyzeEmailIfNeeded(d);
+    }
+  }
+
   /** Infobulle du bouton % correspondance (comme la modale après glisser-déposer). */
   dupMatchTooltip(d: PendingListItem): string {
     const s = d.similarity;
@@ -179,7 +292,12 @@ export class DocumentsComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   load() {
-    this.api.getDocuments().subscribe({ next: (docs) => this.allDocuments.set(docs) });
+    this.api.getDocuments().subscribe({
+      next: (docs) => {
+        this.allDocuments.set(docs);
+        this.runEmailAnalysisForLoadedEmails(docs);
+      },
+    });
     this.api.getPendingList().subscribe({
       next: (res) => {
         this.pendingAlerts.refreshFromItems(res.items);
@@ -446,8 +564,15 @@ export class DocumentsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.spinnerMsg.set('Enregistrement...');
     this.spinner.show('documents');
         this.api.confirmDocument(info.pendingDocument.id, docType).subscribe({
-      next: () => {
-        this.classifyInfo.set(null); this.pendingPdfUrl.set(null); this.spinner.hide('documents');
+      next: (res: any) => {
+        this.spinner.hide('documents');
+        if (res?.needsConfirmation) {
+          this.classifyInfo.set(null);
+          this.pendingPdfUrl.set(null);
+          this.duplicateInfo.set(res);
+          return;
+        }
+        this.classifyInfo.set(null); this.pendingPdfUrl.set(null);
         Swal.fire({ icon: 'success', title: 'Document classe', text: `Enregistre comme ${this.labelMap[docType] || docType}.`, timer: 2500, showConfirmButton: false, toast: true, position: 'top-end' });
         this.load();
       },
@@ -499,7 +624,8 @@ export class DocumentsComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   openDetail(doc: any) {
-    this.detailDoc.set(doc);
+    const latest = this.allDocuments().find((x) => x.id === doc.id) ?? doc;
+    this.detailDoc.set(latest);
     this.detailOpen.set(true);
   }
   closeDetail() { this.detailOpen.set(false); }
