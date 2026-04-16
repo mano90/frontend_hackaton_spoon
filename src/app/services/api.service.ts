@@ -240,8 +240,9 @@ export class ApiService {
   resetConfig(): Observable<{ success: boolean; config: any }> { return this.http.post<{ success: boolean; config: any }>(`${API_BASE}/config/reset`, {}); }
 
   // Stats
-<<<<<<< HEAD
-  getStats(): Observable<any> { return this.http.get(`${BASE}/stats`); }
+  getStats(): Observable<any> {
+    return this.http.get(`${API_BASE}/stats`);
+  }
 
   // M3 / ION API — exécution de transaction
   executeM3(
@@ -251,7 +252,7 @@ export class ApiService {
     options: { maxrecs?: number; returncols?: string; method?: 'GET' | 'POST' } = {}
   ): Observable<{ success: boolean; program: string; transaction: string; result: any }> {
     return this.http.post<{ success: boolean; program: string; transaction: string; result: any }>(
-      `${BASE}/m3/execute`,
+      `${API_BASE}/m3/execute`,
       { program, transaction, data, options }
     );
   }
@@ -260,20 +261,20 @@ export class ApiService {
     records: Record<string, string>[],
     mapping?: Record<string, string>
   ): Observable<M3ImportFacturesResponse> {
-    return this.http.post<M3ImportFacturesResponse>(`${BASE}/m3/import-factures`, { records, mapping });
+    return this.http.post<M3ImportFacturesResponse>(`${API_BASE}/m3/import-factures`, { records, mapping });
   }
 
   // ION Config — credentials de connexion
   getIonConfig(): Observable<{ config: any; configured: boolean }> {
-    return this.http.get<{ config: any; configured: boolean }>(`${BASE}/ion-config`);
+    return this.http.get<{ config: any; configured: boolean }>(`${API_BASE}/ion-config`);
   }
   saveIonConfig(config: any): Observable<{ success: boolean; config: any; configured: boolean }> {
-    return this.http.put<{ success: boolean; config: any; configured: boolean }>(`${BASE}/ion-config`, config);
+    return this.http.put<{ success: boolean; config: any; configured: boolean }>(`${API_BASE}/ion-config`, config);
   }
   testIonConnection(): Observable<{ success: boolean; tokenType?: string; expiresIn?: number; error?: string; detail?: any }> {
-    return this.http.post<{ success: boolean; tokenType?: string; expiresIn?: number; error?: string; detail?: any }>(`${BASE}/ion-config/test`, {});
+    return this.http.post<{ success: boolean; tokenType?: string; expiresIn?: number; error?: string; detail?: any }>(
+      `${API_BASE}/ion-config/test`,
+      {}
+    );
   }
-=======
-  getStats(): Observable<any> { return this.http.get(`${API_BASE}/stats`); }
->>>>>>> 8b9107fa6a823c197e18b010dca5cc5c43bcb7a3
 }
