@@ -194,7 +194,8 @@
     .drawer-btn-pdf {
       display: inline-flex; align-items: center; gap: 0.5rem;
       background: #ef4444; color: white; padding: 0.6rem 1.2rem;
-      border-radius: 8px; font-weight: 600; font-size: 0.875rem; text-decoration: none;
+      border-radius: 8px; font-weight: 600; font-size: 0.875rem;
+      border: none; cursor: pointer; font: inherit;
       transition: background 0.15s;
     }
     .drawer-btn-pdf:hover { background: #dc2626; }

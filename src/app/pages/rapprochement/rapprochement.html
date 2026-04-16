@@ -205,9 +205,9 @@
 
           @if (f.id) {
             <div class="drawer-actions">
-              <a class="drawer-btn-pdf" [href]="'/api/documents/' + f.id + '/pdf'" target="_blank">
+              <button type="button" class="drawer-btn-pdf" (click)="openFacturePdfInNewTab(f.id)">
                 <i class="fas fa-file-pdf"></i> Voir le PDF
-              </a>
+              </button>
             </div>
           }
         </div>

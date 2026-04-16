@@ -204,6 +204,7 @@
                 <div class="tl-detail-pdf">
                   <ngx-extended-pdf-viewer
                     [src]="pdfSrc(ev.id)"
+                    [httpHeaders]="authToken.pdfHttpHeaders()"
                     [height]="'100%'"
                     [language]="'fr-FR'"
                     [textLayer]="true"

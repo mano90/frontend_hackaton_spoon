@@ -658,6 +658,9 @@ textarea:focus {
   color: #64748b;
   background: white;
   transition: color 0.15s, border-color 0.15s;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
 }
 .btn-doc-pdf-external:hover {
   color: #7c3aed;
