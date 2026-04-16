@@ -75,6 +75,11 @@ import { PendingAlertsService } from './services/pending-alerts.service';
               <i class="fas fa-sliders-h"></i><span class="link-text">Tolérance</span>
             </a>
           </li>
+          <li>
+            <a routerLink="/fraud-test" routerLinkActive="active" [attr.title]="layout.sidebarCollapsed() ? 'Test anti-fraude' : null">
+              <i class="fas fa-shield-alt"></i><span class="link-text">Test anti-fraude</span>
+            </a>
+          </li>
         </ul>
       </nav>
       <main class="content">

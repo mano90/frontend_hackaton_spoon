@@ -10,4 +10,5 @@ export const routes: Routes = [
   { path: 'query', loadComponent: () => import('./pages/query/query').then(m => m.QueryComponent) },
   { path: 'svg-test', loadComponent: () => import('./pages/svg-test/svg-test').then(m => m.SvgTestComponent) },
   { path: 'config', loadComponent: () => import('./pages/config/config').then(m => m.ConfigComponent) },
+  { path: 'fraud-test', loadComponent: () => import('./pages/fraud-test/fraud-test').then(m => m.FraudTestComponent) },
 ];

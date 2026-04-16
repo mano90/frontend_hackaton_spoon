@@ -194,6 +194,30 @@ export class ApiService {
   updateConfig(config: any): Observable<{ success: boolean; config: any }> { return this.http.put<{ success: boolean; config: any }>(`${BASE}/config`, config); }
   resetConfig(): Observable<{ success: boolean; config: any }> { return this.http.post<{ success: boolean; config: any }>(`${BASE}/config/reset`, {}); }
 
+  /** Seuils et listes pour l’analyse fraude (backend `FraudConfig`). */
+  getFraudConfig(): Observable<{ fraudConfig: Record<string, unknown>; defaults: Record<string, unknown> }> {
+    return this.http.get<{ fraudConfig: Record<string, unknown>; defaults: Record<string, unknown> }>(`${BASE}/config/fraud`);
+  }
+  updateFraudConfig(partial: Record<string, unknown>): Observable<{ success: boolean; fraudConfig: Record<string, unknown> }> {
+    return this.http.put<{ success: boolean; fraudConfig: Record<string, unknown> }>(`${BASE}/config/fraud`, partial);
+  }
+
+  /** Re-scan fraude ; le PDF doit exister (`document:id:pdf`), sinon 400. */
+  fraudScan(
+    documentId: string,
+    body: { skipLlm?: boolean } = {}
+  ): Observable<{ success: boolean; fraudAnalysis: Record<string, unknown>; document: Record<string, unknown> }> {
+    return this.http.post<{ success: boolean; fraudAnalysis: Record<string, unknown>; document: Record<string, unknown> }>(
+      `${BASE}/documents/${encodeURIComponent(documentId)}/fraud-scan`,
+      body
+    );
+  }
+
+  /** Injection JSON de test — sans PDF ; `fraud-scan` renverra 400. */
+  injectDocuments(items: unknown[]): Observable<{ success: boolean; count: number; ids: string[] }> {
+    return this.http.post<{ success: boolean; count: number; ids: string[] }>(`${BASE}/documents/inject`, items);
+  }
+
   // Stats
   getStats(): Observable<any> { return this.http.get(`${BASE}/stats`); }
 }

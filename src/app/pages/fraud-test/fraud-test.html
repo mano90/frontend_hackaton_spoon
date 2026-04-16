@@ -1,0 +1,284 @@
+<div class="fraud-page">
+  <header class="fraud-header">
+    <h1><i class="fas fa-shield-alt"></i> Test anti-fraude</h1>
+    <p class="fraud-lead">
+      Parcours de test pour le backend : upload PDF facture, lecture de <code>fraudAnalysis</code>, re-scan sans LLM
+      (<code>skipLlm: true</code>), configuration <code>/api/config/fraud</code>, scénario IBAN historique, limite de
+      <code>/api/documents/inject</code>.
+    </p>
+  </header>
+
+  @if (error()) {
+    <div class="fraud-alert fraud-alert--error"><i class="fas fa-exclamation-circle"></i> {{ error() }}</div>
+  }
+
+  <section class="fraud-card">
+    <div class="fraud-card__head"><i class="fas fa-list-check"></i> Scanner les documents existants</div>
+    <div class="fraud-card__body">
+      <p class="fraud-hint">
+        Appelle <code>GET /api/documents</code> puis, pour chaque pièce, <code>POST …/fraud-scan</code> avec
+        <code>skipLlm: true</code>. Seuls les documents avec PDF stocké sont analysés ; les autres sont comptés comme
+        non analysés. La liste ci-dessous regroupe les documents avec au moins un signal ou une gravité autre que
+        <code>none</code>.
+      </p>
+      <div class="fraud-row fraud-row--wrap">
+        <label class="fraud-check">
+          <input type="checkbox" [(ngModel)]="bulkScanOnlyFactures" name="bulkFactureOnly" [disabled]="bulkScanBusy()" />
+          Limiter aux <code>facture</code> (<code>?type=facture</code>)
+        </label>
+        <button type="button" class="btn btn-primary" [disabled]="bulkScanBusy()" (click)="scanAllExistingDocuments()">
+          @if (bulkScanBusy()) {
+            <i class="fas fa-spinner fa-spin"></i>
+          } @else {
+            <i class="fas fa-search"></i>
+          }
+          Scanner et lister les fraudes
+        </button>
+      </div>
+      @if (bulkScanProgress(); as prog) {
+        <p class="fraud-progress">Document {{ prog.current }} / {{ prog.total }}…</p>
+      }
+      @if (bulkScanStats(); as st) {
+        <p class="fraud-stats">
+          <strong>{{ st.total }}</strong> dans la liste,
+          <strong>{{ st.analyzed }}</strong> analysés,
+          <strong>{{ st.skipped }}</strong> non analysés (PDF manquant ou erreur),
+          <strong>{{ st.withFraud }}</strong> avec alerte(s).
+        </p>
+      }
+      @if (bulkScanResults().length > 0) {
+        <div class="fraud-table-wrap">
+          <table class="fraud-table">
+            <thead>
+              <tr>
+                <th>Fichier / Fournisseur</th>
+                <th>Réf. / Id</th>
+                <th>Gravité max</th>
+                <th>Signaux &amp; détails</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of bulkScanResults(); track row.id) {
+                <tr>
+                  <td>
+                    <div class="fraud-td-title">{{ row.fileName || '—' }}</div>
+                    <div class="fraud-td-sub">{{ row.fournisseur || '—' }}</div>
+                    @if (row.date) {
+                      <div class="fraud-td-meta">{{ row.date }}</div>
+                    }
+                  </td>
+                  <td>
+                    <code class="fraud-code-sm">{{ row.reference || '—' }}</code>
+                    <div class="fraud-td-meta">{{ row.id }}</div>
+                  </td>
+                  <td>
+                    <span [class]="severityClass(row.maxSeverity)">{{ row.maxSeverity }}</span>
+                  </td>
+                  <td>
+                    @if (row.summary) {
+                      <p class="fraud-summary"><strong>Synthèse :</strong> {{ row.summary }}</p>
+                    }
+                    @if (row.llmNote) {
+                      <p class="fraud-llm-note"><strong>Note LLM :</strong> {{ row.llmNote }}</p>
+                    }
+                    <ul class="fraud-signal-list">
+                      @for (sig of row.signals; track $index) {
+                        <li>
+                          <span class="fraud-signal-head">
+                            <code>{{ sig.code }}</code>
+                            <span class="fraud-signal-kind">{{ sig.kind }}</span>
+                            <span [class]="severityClass(sig.severity)">{{ sig.severity }}</span>
+                          </span>
+                          @if (sig.evidence.length) {
+                            <ul class="fraud-evidence">
+                              @for (ev of sig.evidence; track idx; let idx = $index) {
+                                <li>{{ ev }}</li>
+                              }
+                            </ul>
+                          }
+                        </li>
+                      }
+                    </ul>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else if (!bulkScanBusy() && bulkScanStats()) {
+        <p class="fraud-muted">Aucun document avec alerte fraude pour cette exécution.</p>
+      }
+    </div>
+  </section>
+
+  <section class="fraud-card">
+    <div class="fraud-card__head"><i class="fas fa-file-pdf"></i> Scénario nominal — POST /api/documents/upload</div>
+    <div class="fraud-card__body">
+      <p class="fraud-hint">
+        Multipart champ <code>file</code>. Cochez « forcer facture » pour envoyer <code>docType=facture</code> et
+        favoriser la chaîne d’ingestion facture. Après succès, l’id est prérempli ci-dessous.
+      </p>
+      <div class="fraud-row">
+        <label class="fraud-file">
+          <span>Fichier PDF</span>
+          <input type="file" accept="application/pdf,.pdf" (change)="onFileSelected($event)" />
+        </label>
+        <label class="fraud-check">
+          <input type="checkbox" [(ngModel)]="forceDocTypeFacture" name="forceFacture" />
+          Forcer <code>docType=facture</code>
+        </label>
+        <button type="button" class="btn btn-primary" [disabled]="uploadBusy()" (click)="runUpload()">
+          @if (uploadBusy()) { <i class="fas fa-spinner fa-spin"></i> } @else { <i class="fas fa-cloud-upload-alt"></i> }
+          Envoyer
+        </button>
+      </div>
+      @if (uploadMessage()) {
+        <p class="fraud-ok">{{ uploadMessage() }}</p>
+      }
+    </div>
+  </section>
+
+  <section class="fraud-card">
+    <div class="fraud-card__head"><i class="fas fa-search"></i> Document — GET /api/documents/:id</div>
+    <div class="fraud-card__body">
+      <div class="fraud-row fraud-row--wrap">
+        <label class="fraud-field-grow">
+          <span>Id document</span>
+          <input type="text" [(ngModel)]="documentIdInput" name="docId" placeholder="UUID retourné par l’upload" />
+        </label>
+        <button type="button" class="btn btn-secondary" [disabled]="docBusy()" (click)="fetchDocument()">
+          @if (docBusy()) { <i class="fas fa-spinner fa-spin"></i> } Charger JSON
+        </button>
+      </div>
+      <p class="fraud-hint">
+        Le JSON doit inclure <code>fraudAnalysis</code> avec <code>signals</code>, <code>maxSeverity</code>,
+        <code>scannedAt</code>, etc., une fois l’ingestion terminée.
+      </p>
+      @if (documentPayload(); as doc) {
+        <div class="fraud-subhead">Extrait <code>fraudAnalysis</code></div>
+        @if (fraudAnalysisView(); as fa) {
+          <pre class="fraud-pre">{{ jsonPretty(fa) }}</pre>
+        } @else {
+          <p class="fraud-muted">Pas encore de <code>fraudAnalysis</code> sur ce document.</p>
+        }
+        <details class="fraud-details">
+          <summary>Document complet (JSON)</summary>
+          <pre class="fraud-pre fraud-pre--tall">{{ jsonPretty(doc) }}</pre>
+        </details>
+      }
+    </div>
+  </section>
+
+  <section class="fraud-card">
+    <div class="fraud-card__head"><i class="fas fa-redo"></i> Re-scan — POST /api/documents/:id/fraud-scan</div>
+    <div class="fraud-card__body">
+      <p class="fraud-hint">
+        Corps JSON <code>&#123; "skipLlm": true &#125;</code> : règles déterministes sans appel LLM (tests stables, sans coût API).
+        Réponse attendue : <code>&#123; success, fraudAnalysis, document &#125;</code>.
+      </p>
+      <div class="fraud-row">
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="scanBusy()"
+          (click)="runFraudScan(true)"
+        >
+          @if (scanBusy()) { <i class="fas fa-spinner fa-spin"></i> }
+          Re-scan fraude (skipLlm)
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="scanBusy()"
+          (click)="runFraudScan(false)"
+        >
+          Re-scan avec LLM
+        </button>
+      </div>
+      @if (scanResult(); as sr) {
+        <div class="fraud-subhead">Réponse fraud-scan</div>
+        <pre class="fraud-pre fraud-pre--tall">{{ jsonPretty(sr) }}</pre>
+      }
+    </div>
+  </section>
+
+  <section class="fraud-card">
+    <div class="fraud-card__head"><i class="fas fa-sliders-h"></i> Règles — GET / PUT /api/config/fraud</div>
+    <div class="fraud-card__body">
+      <p class="fraud-hint">
+        Ajustez par exemple <code>autoApprovalMaxAmount</code>, <code>motsClefsPhishing</code>,
+        <code>arithToleranceEuro</code>, puis rechargez un document ou relancez un re-scan.
+      </p>
+      <div class="fraud-grid">
+        <label>
+          <span>autoApprovalMaxAmount (€)</span>
+          <input type="number" step="1" [(ngModel)]="fraudForm.autoApprovalMaxAmount" name="autoAppr" />
+        </label>
+        <label>
+          <span>arithToleranceEuro</span>
+          <input type="number" step="0.01" [(ngModel)]="fraudForm.arithToleranceEuro" name="arithTol" />
+        </label>
+        <label>
+          <span>newCompanyMaxAgeDays</span>
+          <input type="number" step="1" [(ngModel)]="fraudForm.newCompanyMaxAgeDays" name="newCo" />
+        </label>
+      </div>
+      <label class="fraud-textarea-label">
+        <span>motsClefsPhishing (une entrée par ligne)</span>
+        <textarea rows="5" [(ngModel)]="motsClefsLines" name="motsClefs"></textarea>
+      </label>
+      <label class="fraud-textarea-label">
+        <span>massAddressSubstrings (une entrée par ligne)</span>
+        <textarea rows="4" [(ngModel)]="massAddressLines" name="massAddr"></textarea>
+      </label>
+      <label class="fraud-textarea-label">
+        <span>pdfEditorProducerPatterns (une entrée par ligne)</span>
+        <textarea rows="4" [(ngModel)]="pdfProducerLines" name="pdfProd"></textarea>
+      </label>
+      <div class="fraud-row">
+        <button type="button" class="btn btn-secondary" [disabled]="configBusy()" (click)="loadFraudConfig()">
+          Recharger depuis le serveur
+        </button>
+        <button type="button" class="btn btn-secondary" [disabled]="configBusy()" (click)="resetFraudFormToDefaults()">
+          Réaligner sur les défauts (formulaire)
+        </button>
+        <button type="button" class="btn btn-primary" [disabled]="configBusy()" (click)="saveFraudConfig()">
+          @if (configBusy()) { <i class="fas fa-spinner fa-spin"></i> } Enregistrer (PUT)
+        </button>
+      </div>
+      @if (configMessage()) {
+        <p class="fraud-ok">{{ configMessage() }}</p>
+      }
+    </div>
+  </section>
+
+  <section class="fraud-card">
+    <div class="fraud-card__head"><i class="fas fa-university"></i> Scénario IBAN différent (historique)</div>
+    <div class="fraud-card__body">
+      <p class="fraud-hint">
+        Importez <strong>deux</strong> PDF facture du <strong>même fournisseur</strong> (même SIREN ou même normalisation de nom)
+        avec des <strong>IBAN différents</strong> dans le texte / extraction. La <strong>première</strong> analyse enregistre
+        l’IBAN côté serveur ; la <strong>seconde</strong> peut déclencher le signal
+        <code>IBAN_DIFFERENT_HISTORIQUE</code> (selon les règles du backend).
+      </p>
+    </div>
+  </section>
+
+  <section class="fraud-card fraud-card--warn">
+    <div class="fraud-card__head"><i class="fas fa-flask"></i> Limite de POST /api/documents/inject</div>
+    <div class="fraud-card__body">
+      <p>
+        L’injection JSON <strong>ne stocke pas de PDF</strong> dans Redis (<code>document:id:pdf</code> absent).
+        Un <code>fraud-scan</code> exige le PDF → réponse <strong>400</strong> « PDF manquant ». Pour une analyse fraude
+        complète, utilisez un <strong>upload</strong> ou un flux qui conserve le binaire.
+      </p>
+      <button type="button" class="btn btn-secondary" [disabled]="injectBusy()" (click)="runInjectDemo()">
+        @if (injectBusy()) { <i class="fas fa-spinner fa-spin"></i> }
+        Démo : inject + tentative fraud-scan
+      </button>
+      @if (injectDemoMessage()) {
+        <p class="fraud-ok fraud-ok--wrap">{{ injectDemoMessage() }}</p>
+      }
+    </div>
+  </section>
+</div>
