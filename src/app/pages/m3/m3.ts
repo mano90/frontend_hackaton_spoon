@@ -2,6 +2,8 @@ import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { M3StateService } from '../../services/m3-state.service';
+import { ImportSocketService } from '../../services/import-socket.service';
+import { PendingAlertsService } from '../../services/pending-alerts.service';
 
 @Component({
   selector: 'app-m3',
@@ -13,6 +15,8 @@ import { M3StateService } from '../../services/m3-state.service';
 export class M3Component implements OnInit {
   private api   = inject(ApiService);
   readonly st   = inject(M3StateService);
+  private importSocket = inject(ImportSocketService);
+  private pendingAlerts = inject(PendingAlertsService);
 
   // ── Onglet actif ─────────────────────────────────────────────────────────
   activeTab = signal<'config' | 'factures'>('config');
@@ -407,10 +411,27 @@ export class M3Component implements OnInit {
     this.importing.set(true);
     this.chargeError.set('');
     this.chargeResult.set(null);
-    this.api.importM3Factures(rows, this.fieldMapping()).subscribe({
-      next: ({ count }) => { this.chargeResult.set({ count }); this.importing.set(false); },
-      error: (e) => { this.chargeError.set(e.error?.error ?? 'Erreur lors du chargement.'); this.importing.set(false); },
-    });
+    void this.importSocket
+      .ensureSocket()
+      .catch(() => null)
+      .then(() => {
+        this.api.importM3Factures(rows, this.fieldMapping()).subscribe({
+          next: (res) => {
+            this.chargeResult.set({
+              count: res.count,
+              pendingDuplicateCount: res.pendingDuplicateCount ?? 0,
+            });
+            this.importing.set(false);
+            this.pendingAlerts.refresh();
+            setTimeout(() => this.importSocket.clearM3FacturesProgress(), 800);
+          },
+          error: (e) => {
+            this.chargeError.set(e.error?.error ?? 'Erreur lors du chargement.');
+            this.importing.set(false);
+            this.importSocket.clearM3FacturesProgress();
+          },
+        });
+      });
   }
 
   toggleRaw() { this.showRaw.update(v => !v); }

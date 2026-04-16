@@ -48,9 +48,14 @@
                     <i class="fas fa-file-pdf"></i>
                     <span>{{ showDocumentPdf() ? 'Masquer le PDF' : 'Voir le PDF' }}</span>
                   </button>
-                  <a class="btn-doc-pdf-external" [href]="pdfHref(src.id)" target="_blank" rel="noopener" title="Ouvrir le PDF dans un nouvel onglet">
+                  <button
+                    type="button"
+                    class="btn-doc-pdf-external"
+                    (click)="openPdfInNewTab(src.id)"
+                    title="Ouvrir le PDF dans un nouvel onglet"
+                  >
                     <i class="fas fa-external-link-alt"></i>
-                  </a>
+                  </button>
                 } @else {
                   <p class="modal-muted modal-doc-nopdf"><i class="fas fa-info-circle"></i> Aucun fichier PDF stocké pour ce document.</p>
                 }
@@ -63,6 +68,7 @@
                 <div class="modal-pdf-wrap modal-pdf-collapsible">
                   <ngx-extended-pdf-viewer
                     [src]="pdfHref(src.id)"
+                    [httpHeaders]="authToken.pdfHttpHeaders()"
                     [height]="'min(55vh, 560px)'"
                     [language]="'fr-FR'"
                     [textLayer]="true"

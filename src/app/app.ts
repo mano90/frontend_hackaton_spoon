@@ -138,12 +138,14 @@ import { PendingAlertsService } from './services/pending-alerts.service';
           <span class="global-import-strip__badge">
             @if (strip.kind === 'csv') {
               Import CSV
+            } @else if (strip.kind === 'm3') {
+              Import INFOR
             } @else {
               Envoi documents
             }
           </span>
           <span class="global-import-strip__msg">{{ strip.message }}</span>
-          @if (strip.kind === 'batch' && strip.stepLine) {
+          @if ((strip.kind === 'batch' || strip.kind === 'm3') && strip.stepLine) {
             <span class="global-import-strip__step">{{ strip.stepLine }}</span>
           }
           <span class="global-import-strip__pct">{{ strip.percent | number: '1.0-0' }} %</span>
@@ -175,10 +177,11 @@ export class App implements OnInit, OnDestroy {
     });
   }
 
-  /** Barre + backdrop uniquement pendant un import réel (Socket.io : CSV ou lot PDF). */
+  /** Barre + backdrop pendant un import (Socket.io : CSV, lot PDF, INFOR/M3). */
   globalImportStrip = computed(() => {
     const p = this.importSocket.progress();
     const d = this.importSocket.documentsBatchProgress();
+    const m = this.importSocket.m3FacturesProgress();
     if (p && p.phase !== 'done' && p.phase !== 'error') {
       return { kind: 'csv' as const, message: p.message, percent: Math.min(100, Math.max(0, p.percent)) };
     }
@@ -191,6 +194,17 @@ export class App implements OnInit, OnDestroy {
         message: msg,
         percent: Math.min(100, Math.max(0, d.percent)),
         stepLine,
+      };
+    }
+    if (m && m.phase !== 'done' && m.phase !== 'error') {
+      const step =
+        m.index != null && m.total != null ? `Ligne ${m.index} / ${m.total}` : undefined;
+      const msg = m.reference ? `${m.reference} — ${m.message}` : m.message;
+      return {
+        kind: 'm3' as const,
+        message: msg,
+        percent: Math.min(100, Math.max(0, m.percent)),
+        stepLine: step,
       };
     }
     return null;
