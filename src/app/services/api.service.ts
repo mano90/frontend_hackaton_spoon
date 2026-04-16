@@ -196,4 +196,38 @@ export class ApiService {
 
   // Stats
   getStats(): Observable<any> { return this.http.get(`${BASE}/stats`); }
+
+  // M3 / ION API — exécution de transaction
+  executeM3(
+    program: string,
+    transaction: string,
+    data: Record<string, string> = {},
+    options: { maxrecs?: number; returncols?: string; method?: 'GET' | 'POST' } = {}
+  ): Observable<{ success: boolean; program: string; transaction: string; result: any }> {
+    return this.http.post<{ success: boolean; program: string; transaction: string; result: any }>(
+      `${BASE}/m3/execute`,
+      { program, transaction, data, options }
+    );
+  }
+
+  importM3Factures(
+    records: Record<string, string>[],
+    mapping?: Record<string, string>
+  ): Observable<{ success: boolean; count: number; ids: string[] }> {
+    return this.http.post<{ success: boolean; count: number; ids: string[] }>(
+      `${BASE}/m3/import-factures`,
+      { records, mapping }
+    );
+  }
+
+  // ION Config — credentials de connexion
+  getIonConfig(): Observable<{ config: any; configured: boolean }> {
+    return this.http.get<{ config: any; configured: boolean }>(`${BASE}/ion-config`);
+  }
+  saveIonConfig(config: any): Observable<{ success: boolean; config: any; configured: boolean }> {
+    return this.http.put<{ success: boolean; config: any; configured: boolean }>(`${BASE}/ion-config`, config);
+  }
+  testIonConnection(): Observable<{ success: boolean; tokenType?: string; expiresIn?: number; error?: string; detail?: any }> {
+    return this.http.post<{ success: boolean; tokenType?: string; expiresIn?: number; error?: string; detail?: any }>(`${BASE}/ion-config/test`, {});
+  }
 }

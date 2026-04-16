@@ -64,6 +64,12 @@ import { PendingAlertsService } from './services/pending-alerts.service';
               <i class="fas fa-robot"></i><span class="link-text">Assistant IA</span>
             </a>
           </li>
+          <li class="nav-section"><span class="section-text">Intégrations</span></li>
+          <li>
+            <a routerLink="/m3" routerLinkActive="active" [attr.title]="layout.sidebarCollapsed() ? 'M3 API' : null">
+              <i class="fas fa-database"></i><span class="link-text">M3 API</span>
+            </a>
+          </li>
           <li class="nav-section"><span class="section-text">Paramètres</span></li>
           <li>
             <a routerLink="/config" routerLinkActive="active" [attr.title]="layout.sidebarCollapsed() ? 'Tolérance' : null">
