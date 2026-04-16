@@ -5,6 +5,7 @@ import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 import Swal from 'sweetalert2';
 import { ApiService, type PendingListItem } from '../../services/api.service';
+import { AuthTokenService } from '../../services/auth-token.service';
 import { LayoutService } from '../../services/layout.service';
 import { ImportSocketService, type DocumentsBatchProgressEvent } from '../../services/import-socket.service';
 import { ImportUiBlockService } from '../../services/import-ui-block.service';
@@ -44,6 +45,7 @@ const TABS = [
 })
 export class DocumentsComponent implements OnInit, OnDestroy, AfterViewInit {
   private api = inject(ApiService);
+  readonly authToken = inject(AuthTokenService);
   private spinner = inject(NgxSpinnerService);
   private layout = inject(LayoutService);
   private importUiBlock = inject(ImportUiBlockService);

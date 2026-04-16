@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 import { ApiService } from '../../services/api.service';
+import { AuthTokenService } from '../../services/auth-token.service';
 
 const TYPE_CONFIG: Record<string, { label: string; icon: string; color: string; bg: string }> = {
   devis: { label: 'Devis', icon: 'fa-file-invoice', color: '#6366f1', bg: '#eef2ff' },
@@ -24,6 +25,7 @@ const TYPE_CONFIG: Record<string, { label: string; icon: string; color: string; 
 })
 export class TimelineComponent implements OnInit {
   private api = inject(ApiService);
+  readonly authToken = inject(AuthTokenService);
   private route = inject(ActivatedRoute);
 
   allEvents = signal<any[]>([]);

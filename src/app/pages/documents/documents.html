@@ -274,6 +274,7 @@
         <div class="slide-viewer">
           <ngx-extended-pdf-viewer
             [src]="pdfUrl()!"
+            [httpHeaders]="authToken.pdfHttpHeaders()"
             [height]="'100%'"
             [language]="'fr-FR'"
             [textLayer]="true"
@@ -302,6 +303,7 @@
               <div class="classify-pdf-preview">
                 <ngx-extended-pdf-viewer
                   [src]="pendingSrc"
+                  [httpHeaders]="authToken.pdfHttpHeaders()"
                   [height]="'250px'"
                   [language]="'fr-FR'"
                   [textLayer]="true"
