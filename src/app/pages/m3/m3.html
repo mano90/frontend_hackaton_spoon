@@ -283,10 +283,15 @@
           </div>
         </div>
 
-        @if (chargeResult()) {
+        @if (chargeResult(); as cr) {
           <div class="charge-ok">
             <i class="fas fa-check-circle"></i>
-            {{ chargeResult()!.count }} facture{{ chargeResult()!.count !== 1 ? 's' : '' }} chargée{{ chargeResult()!.count !== 1 ? 's' : '' }} avec succès.
+            {{ cr.count }} facture{{ cr.count !== 1 ? 's' : '' }} enregistrée{{ cr.count !== 1 ? 's' : '' }}.
+            @if ((cr.pendingDuplicateCount ?? 0) > 0) {
+              <span class="charge-ok__pending">
+                {{ cr.pendingDuplicateCount }} doublon{{ cr.pendingDuplicateCount !== 1 ? 's' : '' }} suspect{{ cr.pendingDuplicateCount !== 1 ? 's' : '' }} — voir <strong>Documents</strong> &rarr; Doublons suspects.
+              </span>
+            }
           </div>
         }
         @if (chargeError()) {

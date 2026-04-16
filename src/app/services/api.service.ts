@@ -66,6 +66,25 @@ export type PendingListItem = {
   pendingDocument?: Record<string, unknown>;
 };
 
+/** Réponse POST /api/m3/import-factures (doublons → attente comme upload batch PDF). */
+export interface M3ImportFacturesResponse {
+  success: boolean;
+  count: number;
+  ids: string[];
+  pendingDuplicateCount?: number;
+  pendingDuplicates?: Array<{
+    pendingId: string;
+    reference: string;
+    pendingDocument: Record<string, unknown>;
+    similarity: {
+      duplicateId: string;
+      confidence: number;
+      reason: string;
+      existingDocument: Record<string, unknown> | null;
+    };
+  }>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private http = inject(HttpClient);
@@ -240,11 +259,8 @@ export class ApiService {
   importM3Factures(
     records: Record<string, string>[],
     mapping?: Record<string, string>
-  ): Observable<{ success: boolean; count: number; ids: string[] }> {
-    return this.http.post<{ success: boolean; count: number; ids: string[] }>(
-      `${BASE}/m3/import-factures`,
-      { records, mapping }
-    );
+  ): Observable<M3ImportFacturesResponse> {
+    return this.http.post<M3ImportFacturesResponse>(`${BASE}/m3/import-factures`, { records, mapping });
   }
 
   // ION Config — credentials de connexion

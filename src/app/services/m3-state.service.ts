@@ -25,7 +25,10 @@ export class M3StateService {
   execError     = signal('');
 
   // ── Résultat du dernier chargement en base ────────────────────────────────
-  chargeResult  = signal<{ count: number } | null>(null);
+  chargeResult  = signal<{
+    count: number;
+    pendingDuplicateCount?: number;
+  } | null>(null);
   chargeError   = signal('');
 
   // ── Erreurs de chargement listes ──────────────────────────────────────────
