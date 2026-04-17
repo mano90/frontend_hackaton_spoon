@@ -9,6 +9,9 @@
             <i class="fas fa-play"></i> Lancer le rapprochement
           }
         </button>
+        <button class="btn-secondary" (click)="openRecapViewer()" [disabled]="!canGenerateRecapPdf()">
+          <i class="fas fa-file-alt"></i> Récapitulatif
+        </button>
       </div>
 
       <!-- Progress overlay -->
@@ -137,6 +140,22 @@
               <p>{{ formatExplanation(r.aiExplanation) }}</p>
             </div>
 
+            <div class="confirm-actions">
+              @if (r.confirmed) {
+                <span class="confirmed-badge"><i class="fas fa-check"></i> Confirme</span>
+                <button class="btn-unconfirm" (click)="unconfirm(r.id)">
+                  <i class="fas fa-undo"></i> Annuler confirmation
+                </button>
+              } @else {
+                <button class="btn-confirm" (click)="confirm(r.id)">
+                  <i class="fas fa-check"></i> Confirmer
+                </button>
+                <button class="btn-reject" (click)="reject(r.id)">
+                  <i class="fas fa-times"></i> Rejeter
+                </button>
+              }
+            </div>
+
 
           </div>
         } @empty {
@@ -157,6 +176,39 @@
         }
       </div>
     </div>
+
+    <!-- Vue Récapitulatif PDF -->
+    @if (recapOpen()) {
+      <div class="recap-overlay" role="dialog" aria-modal="true" aria-labelledby="recap-title">
+        <div class="recap-shell">
+          <div class="recap-toolbar">
+            <h2 id="recap-title" class="recap-title">Récapitulatif</h2>
+            <div class="recap-toolbar-actions">
+              <button type="button" class="btn-recap-download" (click)="downloadRecapFromViewer()" [disabled]="!recapPdfSrc()">
+                <i class="fas fa-download"></i> Télécharger
+              </button>
+              <button type="button" class="btn-recap-close" (click)="closeRecapViewer()" title="Fermer">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          <div class="recap-body">
+            @if (recapLoading()) {
+              <div class="recap-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Chargement du PDF…</p>
+              </div>
+            } @else if (recapError()) {
+              <div class="recap-state recap-state--error">
+                <p>{{ recapError() }}</p>
+              </div>
+            } @else if (recapPdfSrc(); as src) {
+              <iframe class="recap-iframe" [src]="src" title="Récapitulatif PDF"></iframe>
+            }
+          </div>
+        </div>
+      </div>
+    }
 
     <!-- Tiroir facture -->
     @if (drawerFacture()) {

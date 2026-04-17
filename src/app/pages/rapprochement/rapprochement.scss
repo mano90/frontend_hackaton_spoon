@@ -1,13 +1,19 @@
     .page { padding: 2rem; max-width: 1200px; margin: 0 auto; }
     h1 { font-size: 1.8rem; margin-bottom: 1.5rem; color: #1e293b; }
 
-    .actions { margin-bottom: 2rem; }
+    .actions { margin-bottom: 2rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
     .btn-primary {
       background: #6366f1; color: white; border: none; padding: 0.75rem 1.5rem;
       border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.2s;
     }
     .btn-primary:hover:not(:disabled) { background: #4f46e5; }
     .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-secondary {
+      background: white; color: #334155; border: 1px solid #cbd5e1; padding: 0.75rem 1.2rem;
+      border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-secondary:hover:not(:disabled) { background: #f8fafc; border-color: #94a3b8; }
+    .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
     .error-msg { background: #fef2f2; color: #dc2626; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; }
 
     /* Progress overlay */
@@ -154,6 +160,8 @@
     .btn-confirm:hover { background: #bbf7d0; }
     .btn-reject { background: #fee2e2; color: #dc2626; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
     .btn-reject:hover { background: #fecaca; }
+    .btn-unconfirm { background: #e2e8f0; color: #334155; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .btn-unconfirm:hover { background: #cbd5e1; }
     .confirmed-badge { background: #dcfce7; color: #16a34a; padding: 0.4rem 0.75rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; }
 
     /* Drawer */
@@ -201,5 +209,54 @@
       transition: background 0.15s;
     }
     .drawer-btn-pdf:hover { background: #dc2626; }
+
+    /* Récapitulatif PDF plein écran */
+    .recap-overlay {
+      position: fixed; inset: 0; z-index: 2100;
+      background: rgba(15, 23, 42, 0.6);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1rem;
+      animation: fadeIn 0.2s ease;
+    }
+    .recap-shell {
+      display: flex; flex-direction: column;
+      width: min(960px, 100%);
+      height: min(90vh, 880px);
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+    }
+    .recap-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem;
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+      background: #f8fafc;
+    }
+    .recap-title { margin: 0; font-size: 1.1rem; font-weight: 700; color: #1e293b; }
+    .recap-toolbar-actions { display: flex; align-items: center; gap: 0.5rem; }
+    .btn-recap-download {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      background: #6366f1; color: #fff; border: none;
+      padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
+      cursor: pointer; font: inherit;
+    }
+    .btn-recap-download:hover:not(:disabled) { background: #4f46e5; }
+    .btn-recap-download:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-recap-close {
+      background: transparent; border: none; color: #64748b;
+      padding: 0.4rem 0.55rem; border-radius: 8px; cursor: pointer; font-size: 1.15rem;
+      line-height: 1;
+    }
+    .btn-recap-close:hover { background: #e2e8f0; color: #0f172a; }
+    .recap-body { flex: 1; min-height: 0; position: relative; background: #e2e8f0; }
+    .recap-iframe { width: 100%; height: 100%; border: 0; display: block; }
+    .recap-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 0.75rem; height: 100%; min-height: 200px; color: #64748b; padding: 2rem;
+    }
+    .recap-state--error { color: #dc2626; }
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
