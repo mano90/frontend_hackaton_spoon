@@ -64,6 +64,10 @@ export class RapprochementComponent implements OnInit, AfterViewInit {
     return this.mouvementsMap()[id] ?? null;
   }
 
+  openFacturePdfInNewTab(factureId: string): void {
+    this.api.openDocumentPdfInNewTab(factureId);
+  }
+
   openDrawer(factureId: string) {
     const cached = this.facturesMap()[factureId];
     if (cached) {

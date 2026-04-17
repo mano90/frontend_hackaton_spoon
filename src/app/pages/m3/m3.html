@@ -1,0 +1,333 @@
+<div class="m3-page">
+
+  <div class="m3-header">
+    <h1><i class="fas fa-database"></i> M3 API</h1>
+    <p class="subtitle">Intégration Infor M3 via ION API</p>
+  </div>
+
+  <!-- Onglets -->
+  <div class="tabs">
+    <button class="tab-btn" [class.active]="activeTab() === 'config'" (click)="activeTab.set('config')">
+      <i class="fas fa-plug"></i> Configuration
+      @if (configured()) {
+        <span class="tab-badge tab-badge--ok"><i class="fas fa-check"></i></span>
+      } @else {
+        <span class="tab-badge tab-badge--warn"><i class="fas fa-exclamation"></i></span>
+      }
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'factures'" (click)="activeTab.set('factures')" [disabled]="!configured()">
+      <i class="fas fa-file-invoice"></i> Charger des factures
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════ ONGLET CONFIG ═══════════════════════════ -->
+  @if (activeTab() === 'config') {
+    <div class="config-card">
+      <div class="config-intro">
+        <i class="fas fa-info-circle"></i>
+        Renseignez les informations d'accès ION API. Ces données proviennent du fichier
+        <code>.ionapi</code> téléchargeable depuis <strong>Infor OS &rarr; ION API &rarr; Authorized Apps</strong>.
+      </div>
+
+      <div class="config-form">
+
+        <!-- Import fichier .ionapi -->
+        <div class="import-bar">
+          <span class="import-label"><i class="fas fa-file-import"></i> Auto-remplir depuis votre fichier :</span>
+          <label class="btn-import">
+            <i class="fas fa-upload"></i> Importer <code>mon_serveur.ionapi</code>
+            <input type="file" accept=".ionapi,.json" (change)="importFromFile($event)" hidden />
+          </label>
+          @if (importError()) {
+            <span class="import-error"><i class="fas fa-exclamation-circle"></i> {{ importError() }}</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Libellé de la connexion <span class="optional">(facultatif)</span></label>
+          <input type="text" class="form-input"
+            [ngModel]="ionConfig().label"
+            (ngModelChange)="updateConfig('label', $event)"
+            placeholder="ex: Production M3 — NomTenant" />
+        </div>
+
+        <div class="form-group">
+          <label>URL du Token OAuth <span class="required">*</span></label>
+          <input type="url" class="form-input mono"
+            [ngModel]="ionConfig().tokenUrl"
+            (ngModelChange)="updateConfig('tokenUrl', $event)"
+            placeholder="https://mingle-ionapi.eu1.inforcloudsuite.com" />
+          <span class="hint">Construit depuis <code>iu</code> + <code>ot</code> du fichier .ionapi</span>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Client ID <span class="required">*</span></label>
+            <input type="text" class="form-input mono"
+              [ngModel]="ionConfig().clientId"
+              (ngModelChange)="updateConfig('clientId', $event)"
+              placeholder="Champ ci du fichier .ionapi" />
+          </div>
+          <div class="form-group">
+            <label>Client Secret <span class="required">*</span></label>
+            <input type="password" class="form-input mono"
+              [ngModel]="ionConfig().clientSecret"
+              (ngModelChange)="updateConfig('clientSecret', $event)"
+              placeholder="Champ cs du fichier .ionapi" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>URL de base ION API <span class="required">*</span></label>
+          <input type="url" class="form-input mono"
+            [ngModel]="ionConfig().baseUrl"
+            (ngModelChange)="updateConfig('baseUrl', $event)"
+            placeholder="https://mingle-portal.eu1.inforcloudsuite.com/v2/NomTenant" />
+          <span class="hint">Construit depuis <code>iu</code> + <code>ti</code> du fichier .ionapi</span>
+        </div>
+
+        <!-- Actions -->
+        <div class="config-actions">
+          <button class="btn-test" (click)="testConnection()" [disabled]="testing() || configSaving()">
+            <i class="fas" [class.fa-bolt]="!testing()" [class.fa-spinner]="testing()" [class.fa-spin]="testing()"></i>
+            {{ testing() ? 'Test en cours...' : 'Tester la connexion' }}
+          </button>
+          <button class="btn-save" (click)="saveConfig()" [disabled]="configSaving() || testing()">
+            <i class="fas" [class.fa-save]="!configSaving()" [class.fa-spinner]="configSaving()" [class.fa-spin]="configSaving()"></i>
+            {{ configSaving() ? 'Sauvegarde...' : (configSaved() ? 'Sauvegardé ✓' : 'Sauvegarder') }}
+          </button>
+        </div>
+
+        <!-- Résultat du test -->
+        @if (testResult()) {
+          <div class="test-result" [class.test-result--ok]="testResult()!.success" [class.test-result--err]="!testResult()!.success">
+            @if (testResult()!.success) {
+              <i class="fas fa-check-circle"></i>
+              Connexion réussie — Token <strong>{{ testResult()!.tokenType }}</strong> obtenu,
+              valide <strong>{{ testResult()!.expiresIn }}s</strong>.
+            } @else {
+              <i class="fas fa-times-circle"></i>
+              Échec : {{ testResult()!.error }}
+            }
+          </div>
+        }
+
+        @if (configError()) {
+          <div class="error-block"><i class="fas fa-exclamation-triangle"></i> {{ configError() }}</div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ══════════════════════════ ONGLET EXÉCUTION ═════════════════════════ -->
+  @if (activeTab() === 'factures') {
+
+    <!-- Exemples rapides -->
+    <div class="examples-bar">
+      <span class="examples-label">Exemples :</span>
+      @for (ex of EXAMPLES; track ex.label) {
+        <button class="btn-example" (click)="loadExample(ex)">{{ ex.label }}</button>
+      }
+    </div>
+
+    <!-- Formulaire -->
+    <div class="m3-form-card">
+      <div class="form-row">
+        <div class="form-group">
+          <label>
+            Programme
+            @if (loadingPrograms()) {
+              <span class="hint-inline"><i class="fas fa-spinner fa-spin"></i> chargement...</span>
+            } @else if (programsError()) {
+              <span class="hint-inline hint-inline--err"><i class="fas fa-exclamation-circle"></i> {{ programsError() }}</span>
+            } @else if (programs().length) {
+              <span class="hint-inline">{{ programs().length }} programmes</span>
+            }
+          </label>
+          <div class="combobox">
+            <input type="text" class="form-input mono"
+              [value]="showProgramDropdown() ? programSearch() : program()"
+              (focus)="onProgramFocus()"
+              (input)="onProgramInput($any($event.target).value)"
+              (blur)="onProgramBlur()"
+              placeholder="Rechercher un programme..." />
+            @if (showProgramDropdown() && filteredPrograms().length) {
+              <ul class="combobox-list">
+                @for (p of filteredPrograms(); track p.PGNM) {
+                  <li class="combobox-item" (mousedown)="selectProgram(p)">
+                    <span class="combobox-code">{{ p.PGNM }}</span>
+                    @if (p.TX40) { <span class="combobox-label">{{ p.TX40 }}</span> }
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </div>
+        <div class="form-group">
+          <label>
+            Transaction
+            @if (loadingTransactions()) {
+              <span class="hint-inline"><i class="fas fa-spinner fa-spin"></i> chargement...</span>
+            } @else if (transactionsError()) {
+              <span class="hint-inline hint-inline--err"><i class="fas fa-exclamation-circle"></i> {{ transactionsError() }}</span>
+            } @else if (transactions().length) {
+              <span class="hint-inline">{{ transactions().length }} transactions</span>
+            }
+          </label>
+          <div class="combobox">
+            <input type="text" class="form-input mono"
+              [value]="showTransactionDropdown() ? transactionSearch() : transaction()"
+              (focus)="onTransactionFocus()"
+              (input)="onTransactionInput($any($event.target).value)"
+              (blur)="onTransactionBlur()"
+              [placeholder]="program() ? 'Rechercher une transaction...' : 'Sélectionner un programme d\'abord'"
+              [disabled]="!program()" />
+            @if (showTransactionDropdown() && filteredTransactions().length) {
+              <ul class="combobox-list">
+                @for (t of filteredTransactions(); track t.TRNM) {
+                  <li class="combobox-item" (mousedown)="selectTransaction(t)">
+                    <span class="combobox-code">{{ t.TRNM }}</span>
+                    @if (t.TX40) { <span class="combobox-label">{{ t.TX40 }}</span> }
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </div>
+        <div class="form-group form-group--small">
+          <label>Max enreg.</label>
+          <input type="number" class="form-input"
+            [ngModel]="maxrecs()" (ngModelChange)="maxrecs.set(+$event)"
+            min="1" max="1000" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group form-group--params">
+          <label>Paramètres <span class="hint-inline">(CLE=VALEUR, un par ligne)</span></label>
+          <textarea class="form-input mono" rows="4"
+            [ngModel]="paramsRaw()" (ngModelChange)="paramsRaw.set($event)"
+            placeholder="CONO=1&#10;SUNO=SUP001"></textarea>
+        </div>
+        <div class="form-group form-group--cols">
+          <label>Colonnes <span class="hint-inline">(vide = toutes)</span></label>
+          <input type="text" class="form-input mono"
+            [ngModel]="returncols()" (ngModelChange)="returncols.set($event)"
+            placeholder="ex: SUNO,SUNM,PHNO" />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-execute" (click)="execute()" [disabled]="loading()">
+          <i class="fas" [class.fa-play]="!loading()" [class.fa-spinner]="loading()" [class.fa-spin]="loading()"></i>
+          {{ loading() ? 'Exécution...' : 'Exécuter' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Erreur exécution -->
+    @if (execError()) {
+      <div class="error-block">
+        <i class="fas fa-exclamation-triangle"></i> {{ execError() }}
+      </div>
+    }
+
+    <!-- Résultats -->
+    @if (result()) {
+      <div class="results-card">
+        <div class="results-header">
+          <span class="results-title">
+            <i class="fas fa-table"></i>
+            {{ records().length }} enregistrement{{ records().length !== 1 ? 's' : '' }}
+            — {{ program() }} / {{ transaction() }}
+          </span>
+          <div class="results-actions">
+            <button class="btn-toggle-raw" (click)="toggleRaw()">
+              <i class="fas" [class.fa-code]="!showRaw()" [class.fa-table]="showRaw()"></i>
+              {{ showRaw() ? 'Tableau' : 'JSON brut' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Mapping champs M3 → app -->
+        <div class="mapping-panel">
+          <div class="mapping-title">
+            <i class="fas fa-sliders-h"></i> Mapping pour le chargement
+          </div>
+          <div class="mapping-grid">
+            @for (field of APP_FIELDS; track field.key) {
+              <div class="mapping-row">
+                <span class="mapping-app-field">{{ field.label }}</span>
+                <i class="fas fa-arrow-right mapping-arrow"></i>
+                <select class="mapping-select"
+                  [ngModel]="fieldMapping()[field.key]"
+                  (ngModelChange)="updateMapping(field.key, $event)">
+                  <option value="">(non mappé)</option>
+                  @for (col of columns(); track col) {
+                    <option [value]="col">{{ col }}</option>
+                  }
+                </select>
+                @if (fieldMapping()[field.key]) {
+                  <span class="mapping-preview">
+                    ex : {{ records()[0]?.[fieldMapping()[field.key]] ?? '—' }}
+                  </span>
+                }
+              </div>
+            }
+          </div>
+          <div class="mapping-actions">
+            <button class="btn-charger" (click)="charger()" [disabled]="importing() || !records().length">
+              <i class="fas" [class.fa-database]="!importing()" [class.fa-spinner]="importing()" [class.fa-spin]="importing()"></i>
+              {{ importing() ? 'Chargement...' : 'Charger dans l\'app (' + records().length + ' enreg.)' }}
+            </button>
+          </div>
+        </div>
+
+        @if (chargeResult(); as cr) {
+          <div class="charge-ok">
+            <i class="fas fa-check-circle"></i>
+            {{ cr.count }} facture{{ cr.count !== 1 ? 's' : '' }} enregistrée{{ cr.count !== 1 ? 's' : '' }}.
+            @if ((cr.pendingDuplicateCount ?? 0) > 0) {
+              <span class="charge-ok__pending">
+                {{ cr.pendingDuplicateCount }} doublon{{ cr.pendingDuplicateCount !== 1 ? 's' : '' }} suspect{{ cr.pendingDuplicateCount !== 1 ? 's' : '' }} — voir <strong>Documents</strong> &rarr; Doublons suspects.
+              </span>
+            }
+          </div>
+        }
+        @if (chargeError()) {
+          <div class="error-block"><i class="fas fa-exclamation-triangle"></i> {{ chargeError() }}</div>
+        }
+
+        @if (!showRaw() && records().length > 0) {
+          <div class="table-wrapper">
+            <table class="m3-table">
+              <thead>
+                <tr>
+                  @for (col of columns(); track col) { <th>{{ col }}</th> }
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of records(); track $index) {
+                  <tr>
+                    @for (col of columns(); track col) { <td>{{ row[col] }}</td> }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+        @if (!showRaw() && records().length === 0) {
+          <div class="no-records">
+            <i class="fas fa-inbox"></i> Aucun enregistrement retourné.
+          </div>
+        }
+
+        @if (showRaw()) {
+          <pre class="raw-json">{{ rawJson }}</pre>
+        }
+      </div>
+    }
+  }
+
+</div>

@@ -33,6 +33,16 @@ export type DocumentsBatchProgressEvent = {
   stepCount?: number;
 };
 
+export type M3FacturesImportProgressEvent = {
+  phase: 'started' | 'processing' | 'done' | 'error';
+  message: string;
+  percent: number;
+  index?: number;
+  total?: number;
+  reference?: string;
+  outcome?: 'saved' | 'pending_duplicate';
+};
+
 @Injectable({ providedIn: 'root' })
 export class ImportSocketService {
   private socket: Socket | null = null;
@@ -43,6 +53,8 @@ export class ImportSocketService {
   readonly documentsBatchLog = signal<string[]>([]);
   readonly salesforceSyncProgress = signal<SalesforceSyncProgressEvent | null>(null);
   readonly salesforceSyncLog = signal<string[]>([]);
+  /** Import factures M3 / INFOR (doublons + enregistrement). */
+  readonly m3FacturesProgress = signal<M3FacturesImportProgressEvent | null>(null);
   readonly socketId = signal<string | null>(null);
 
   /** Connexion Socket.io ; retourne l’id à envoyer au backend pour les événements `import:progress`. */
@@ -88,6 +100,7 @@ export class ImportSocketService {
             : ev.message;
           this.salesforceSyncLog.update((log) => [...log, line].slice(-100));
         });
+        s.on('m3-factures:progress', (ev: M3FacturesImportProgressEvent) => this.m3FacturesProgress.set(ev));
       };
 
       const onConnected = () => {
@@ -131,5 +144,7 @@ export class ImportSocketService {
   clearSalesforceSync(): void {
     this.salesforceSyncProgress.set(null);
     this.salesforceSyncLog.set([]);
+  clearM3FacturesProgress(): void {
+    this.m3FacturesProgress.set(null);
   }
 }

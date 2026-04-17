@@ -11,6 +11,7 @@ import {
   type AIQuerySourceRef,
   type AIQueryHistoryTurn,
 } from '../../services/api.service';
+import { AuthTokenService } from '../../services/auth-token.service';
 
 const CHAT_TL_TYPE_CFG: Record<string, { label: string; icon: string; color: string }> = {
   devis: { label: 'Devis', icon: 'fa-file-invoice', color: '#6366f1' },
@@ -34,6 +35,7 @@ const WANTS_TIMELINE_RE =
 })
 export class QueryComponent implements AfterViewInit, OnInit {
   private api = inject(ApiService);
+  readonly authToken = inject(AuthTokenService);
   private router = inject(Router);
 
   private readonly IA_SESSION_KEY = 'ia_assistant_session_id';
@@ -327,6 +329,10 @@ export class QueryComponent implements AfterViewInit, OnInit {
 
   pdfHref(id: string): string {
     return this.api.getDocumentPdfUrl(id);
+  }
+
+  openPdfInNewTab(id: string): void {
+    this.api.openDocumentPdfInNewTab(id);
   }
 
   openTimelinePage(scenarioId?: string) {
