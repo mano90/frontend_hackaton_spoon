@@ -248,6 +248,14 @@ export class ApiService {
   updateConfig(config: any): Observable<{ success: boolean; config: any }> { return this.http.put<{ success: boolean; config: any }>(`${API_BASE}/config`, config); }
   resetConfig(): Observable<{ success: boolean; config: any }> { return this.http.post<{ success: boolean; config: any }>(`${API_BASE}/config/reset`, {}); }
 
+  // Admin
+  clearAllData(): Observable<{ success: boolean; deleted: number }> {
+    return this.http.delete<{ success: boolean; deleted: number }>(`${API_BASE}/admin/clear-all`);
+  }
+  reloadSeeds(): Observable<{ success: boolean }> {
+    return this.http.post<{ success: boolean }>(`${API_BASE}/admin/seed`, {});
+  }
+
   // Stats
   getStats(): Observable<any> { return this.http.get(`${API_BASE}/stats`); }
 

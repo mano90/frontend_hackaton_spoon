@@ -15,8 +15,48 @@
         padding-right: calc(2rem + var(--pdf-panel-width));
       }
     }
-    h1 { font-size: 1.8rem; margin-bottom: 1.5rem; color: #1e293b; }
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .page-header__actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    h1 { font-size: 1.8rem; margin-bottom: 0; color: #1e293b; }
     h1 i { margin-right: 0.5rem; color: #6366f1; }
+
+    .btn-admin {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.9rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: opacity 0.15s;
+
+      &:disabled { opacity: 0.5; cursor: not-allowed; }
+      &:not(:disabled):hover { opacity: 0.82; }
+
+      &--seed {
+        background: #f0fdf4;
+        color: #15803d;
+        border-color: #bbf7d0;
+      }
+      &--danger {
+        background: #fef2f2;
+        color: #b91c1c;
+        border-color: #fecaca;
+      }
+    }
 
     .batch-upload-overlay {
       position: fixed;

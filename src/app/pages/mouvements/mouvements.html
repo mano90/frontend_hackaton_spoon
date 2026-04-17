@@ -22,7 +22,19 @@
     }
 
     <div class="page">
-      <h1>Mouvements Bancaires</h1>
+      <div class="page-header">
+        <h1>Mouvements Bancaires</h1>
+        <div class="page-header__actions">
+          <button class="btn-admin btn-admin--seed" (click)="reloadSeeds()" [disabled]="seeding() || clearing()">
+            <i class="fas" [class.fa-rotate]="!seeding()" [class.fa-spinner]="seeding()" [class.fa-spin]="seeding()"></i>
+            {{ seeding() ? 'Chargement...' : 'Données de démonstration' }}
+          </button>
+          <button class="btn-admin btn-admin--danger" (click)="clearAll()" [disabled]="clearing() || seeding()">
+            <i class="fas" [class.fa-trash]="!clearing()" [class.fa-spinner]="clearing()" [class.fa-spin]="clearing()"></i>
+            {{ clearing() ? 'Suppression...' : 'Vider les données' }}
+          </button>
+        </div>
+      </div>
 
       <div class="csv-import">
         <h3><i class="fas fa-file-csv"></i> Importer un CSV</h3>

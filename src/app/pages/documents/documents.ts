@@ -293,6 +293,51 @@ export class DocumentsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.stopBatchUploadDemo();
   }
 
+  clearing = signal(false);
+  seeding = signal(false);
+
+  clearAll() {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Vider toutes les données ?',
+      text: 'Documents, mouvements, rapprochements et sessions IA seront supprimés définitivement.',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonText: 'Annuler',
+      confirmButtonText: 'Vider',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      this.clearing.set(true);
+      this.api.clearAllData().subscribe({
+        next: (res) => {
+          this.clearing.set(false);
+          this.allDocuments.set([]);
+          this.pendingAlerts.refreshFromItems([]);
+          Swal.fire({ icon: 'success', title: 'Données vidées', text: `${res.deleted} entrées supprimées.`, timer: 2500, showConfirmButton: false, toast: true, position: 'top-end' });
+        },
+        error: () => {
+          this.clearing.set(false);
+          Swal.fire({ icon: 'error', title: 'Erreur', text: 'Impossible de vider les données.', timer: 3000, showConfirmButton: false, toast: true, position: 'top-end' });
+        },
+      });
+    });
+  }
+
+  reloadSeeds() {
+    this.seeding.set(true);
+    this.api.reloadSeeds().subscribe({
+      next: () => {
+        this.load();
+        this.seeding.set(false);
+        Swal.fire({ icon: 'success', title: 'Seeds rechargés', timer: 2000, showConfirmButton: false, toast: true, position: 'top-end' });
+      },
+      error: () => {
+        this.seeding.set(false);
+        Swal.fire({ icon: 'error', title: 'Erreur seed', text: 'Le rechargement a échoué.', timer: 3000, showConfirmButton: false, toast: true, position: 'top-end' });
+      },
+    });
+  }
+
   load() {
     this.api.getDocuments().subscribe({
       next: (docs) => {
