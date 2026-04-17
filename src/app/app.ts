@@ -17,7 +17,7 @@ import { PendingAlertsService } from './services/pending-alerts.service';
         <div class="logo">
           <div class="logo-row">
             <div class="brand">
-              <h2>FactureMatch</h2>
+              <h2>Random Team</h2>
               <span class="tagline">Rapprochement IA</span>
             </div>
             <button
@@ -66,19 +66,19 @@ import { PendingAlertsService } from './services/pending-alerts.service';
           </li>
           <li class="nav-section"><span class="section-text">Intégrations</span></li>
           <li>
-            <a routerLink="/m3" routerLinkActive="active" [attr.title]="layout.sidebarCollapsed() ? 'M3 API' : null">
-              <i class="fas fa-database"></i><span class="link-text">M3 API</span>
+            <a routerLink="/integrations" routerLinkActive="active" [attr.title]="layout.sidebarCollapsed() ? 'Salesforce' : null">
+              <i class="fas fa-cloud"></i><span class="link-text">Salesforce</span>
+            </a>
+          </li>
+          <li>
+            <a routerLink="/m3" routerLinkActive="active" [attr.title]="layout.sidebarCollapsed() ? 'Infor M3' : null">
+              <i class="fas fa-database"></i><span class="link-text">Infor M3</span>
             </a>
           </li>
           <li class="nav-section"><span class="section-text">Paramètres</span></li>
           <li>
             <a routerLink="/config" routerLinkActive="active" [attr.title]="layout.sidebarCollapsed() ? 'Tolérance' : null">
               <i class="fas fa-sliders-h"></i><span class="link-text">Tolérance</span>
-            </a>
-          </li>
-          <li>
-            <a routerLink="/integrations" routerLinkActive="active" [attr.title]="layout.sidebarCollapsed() ? 'Intégrations' : null">
-              <i class="fas fa-cog"></i><span class="link-text">Intégrations</span>
             </a>
           </li>
         </ul>
