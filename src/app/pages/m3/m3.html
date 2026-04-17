@@ -122,14 +122,6 @@
   <!-- ══════════════════════════ ONGLET EXÉCUTION ═════════════════════════ -->
   @if (activeTab() === 'factures') {
 
-    <!-- Exemples rapides -->
-    <div class="examples-bar">
-      <span class="examples-label">Exemples :</span>
-      @for (ex of EXAMPLES; track ex.label) {
-        <button class="btn-example" (click)="loadExample(ex)">{{ ex.label }}</button>
-      }
-    </div>
-
     <!-- Formulaire -->
     <div class="m3-form-card">
       <div class="form-row">
