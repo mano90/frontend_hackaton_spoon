@@ -16,19 +16,29 @@
     .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
     .error-msg { background: #fef2f2; color: #dc2626; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; }
 
-    /* Progress overlay */
+    /* Progress — coin bas-droite, non bloquant */
     .progress-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(15, 23, 42, 0.75); z-index: 2000;
-      display: flex; align-items: center; justify-content: center;
-      animation: fadeIn 0.2s ease;
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 2000;
+      animation: slideInCorner 0.25s ease;
+      pointer-events: none;
+    }
+    @keyframes slideInCorner {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
     .progress-card {
-      background: white; border-radius: 16px; padding: 2rem 2.5rem; width: 480px;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+      background: white;
+      border-radius: 14px;
+      padding: 1.1rem 1.4rem;
+      width: 320px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 0 0 1px rgba(99,102,241,0.12);
+      pointer-events: auto;
     }
-    .progress-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
-    .progress-header h3 { margin: 0; font-size: 1.15rem; color: #1e293b; }
+    .progress-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.9rem; }
+    .progress-header h3 { margin: 0; font-size: 0.95rem; color: #1e293b; }
 
     /* Pulse animation */
     .progress-icon { position: relative; width: 36px; height: 36px; }
@@ -46,9 +56,9 @@
       100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; }
     }
 
-    .progress-info { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
-    .progress-label { font-size: 0.9rem; color: #64748b; }
-    .progress-percent { font-size: 0.9rem; font-weight: 700; color: #6366f1; }
+    .progress-info { display: flex; justify-content: space-between; margin-bottom: 0.4rem; }
+    .progress-label { font-size: 0.82rem; color: #64748b; }
+    .progress-percent { font-size: 0.82rem; font-weight: 700; color: #6366f1; }
 
     .progress-bar-track {
       width: 100%; height: 10px; background: #e2e8f0; border-radius: 10px; overflow: hidden;
@@ -59,20 +69,20 @@
     }
 
     .progress-detail {
-      margin: 0.75rem 0 0; font-size: 0.85rem; color: #94a3b8; text-align: center;
+      margin: 0.5rem 0 0; font-size: 0.78rem; color: #94a3b8;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
 
     .progress-stats {
-      display: flex; gap: 1rem; margin-top: 1.25rem; justify-content: center;
+      display: flex; gap: 0.5rem; margin-top: 0.9rem; justify-content: center;
     }
     .stat {
-      text-align: center; padding: 0.5rem 1rem; border-radius: 8px; min-width: 80px;
+      text-align: center; padding: 0.35rem 0.65rem; border-radius: 8px; min-width: 64px;
     }
     .stat.exact { background: #dcfce7; }
     .stat.partial { background: #fef3c7; }
     .stat.no-match { background: #fee2e2; }
-    .stat-count { display: block; font-size: 1.25rem; font-weight: 700; }
+    .stat-count { display: block; font-size: 1.05rem; font-weight: 700; }
     .stat.exact .stat-count { color: #16a34a; }
     .stat.partial .stat-count { color: #d97706; }
     .stat.no-match .stat-count { color: #dc2626; }

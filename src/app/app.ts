@@ -5,6 +5,7 @@ import { LayoutService } from './services/layout.service';
 import { ImportSocketService } from './services/import-socket.service';
 import { ImportUiBlockService } from './services/import-ui-block.service';
 import { PendingAlertsService } from './services/pending-alerts.service';
+import { RapprochementRunService } from './services/rapprochement-run.service';
 
 @Component({
   selector: 'app-root',
@@ -160,6 +161,32 @@ import { PendingAlertsService } from './services/pending-alerts.service';
         </div>
       </div>
     }
+    @if (rapprochementRun.running()) {
+      <div class="rapp-progress-corner" role="status" aria-live="polite">
+        <div class="rapp-progress-header">
+          <div class="rapp-pulse-icon">
+            <div class="rapp-pulse-ring"></div>
+            <div class="rapp-pulse-dot"></div>
+          </div>
+          <span class="rapp-progress-title">Rapprochement en cours</span>
+        </div>
+        <div class="rapp-progress-info">
+          <span class="rapp-progress-label">{{ rapprochementRun.progressCurrent() }} / {{ rapprochementRun.progressTotal() }}</span>
+          <span class="rapp-progress-pct">{{ rapprochementRun.progressPercent() }} %</span>
+        </div>
+        <div class="rapp-progress-track">
+          <div class="rapp-progress-fill" [style.width.%]="rapprochementRun.progressPercent()"></div>
+        </div>
+        @if (rapprochementRun.progressCurrentLabel()) {
+          <p class="rapp-progress-detail">{{ rapprochementRun.progressCurrentLabel() }}</p>
+        }
+        <div class="rapp-stats">
+          <span class="rapp-stat rapp-stat--exact"><i class="fas fa-check"></i> {{ rapprochementRun.statsExact() }}</span>
+          <span class="rapp-stat rapp-stat--partial"><i class="fas fa-adjust"></i> {{ rapprochementRun.statsPartial() }}</span>
+          <span class="rapp-stat rapp-stat--none"><i class="fas fa-times"></i> {{ rapprochementRun.statsNoMatch() }}</span>
+        </div>
+      </div>
+    }
     </div>
   `,
   styleUrl: './app.scss'
@@ -170,6 +197,8 @@ export class App implements OnInit, OnDestroy {
   private importSocket = inject(ImportSocketService);
   private importUiBlock = inject(ImportUiBlockService);
   readonly pendingAlerts = inject(PendingAlertsService);
+
+  readonly rapprochementRun = inject(RapprochementRunService);
 
   /** Panneau liste des doublons (cloche). */
   notifOpen = signal(false);

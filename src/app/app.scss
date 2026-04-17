@@ -3,6 +3,113 @@
   min-height: 100vh;
 }
 
+// ── Carte de progression rapprochement (coin bas-droite, globale) ──────────
+.rapp-progress-corner {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 2000;
+  width: 300px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.16), 0 0 0 1px rgba(99,102,241,0.12);
+  animation: rappSlideIn 0.25s ease;
+  pointer-events: auto;
+}
+@keyframes rappSlideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.rapp-progress-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+.rapp-progress-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+.rapp-pulse-icon {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+.rapp-pulse-dot {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #6366f1;
+}
+.rapp-pulse-ring {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 2px solid #6366f1;
+  animation: rappPulse 1.5s ease-out infinite;
+}
+@keyframes rappPulse {
+  0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; }
+}
+
+.rapp-progress-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+.rapp-progress-label { font-size: 0.78rem; color: #64748b; }
+.rapp-progress-pct   { font-size: 0.78rem; font-weight: 700; color: #6366f1; }
+
+.rapp-progress-track {
+  width: 100%; height: 8px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.rapp-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #818cf8);
+  border-radius: 999px;
+  transition: width 0.35s ease;
+}
+
+.rapp-progress-detail {
+  margin: 0.45rem 0 0;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rapp-stats {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.rapp-stat {
+  flex: 1;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.4rem;
+  border-radius: 6px;
+
+  &--exact   { background: #dcfce7; color: #16a34a; }
+  &--partial { background: #fef3c7; color: #d97706; }
+  &--none    { background: #fee2e2; color: #dc2626; }
+}
+
+
 .app-layout {
   display: flex;
   height: 100vh;

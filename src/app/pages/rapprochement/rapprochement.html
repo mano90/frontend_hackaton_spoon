@@ -2,8 +2,8 @@
       <h1>Rapprochement Bancaire</h1>
 
       <div class="actions">
-        <button class="btn-primary" (click)="runAll()" [disabled]="running()">
-          @if (running()) {
+        <button class="btn-primary" (click)="runAll()" [disabled]="run.running()">
+          @if (run.running()) {
             <i class="fas fa-spinner fa-spin"></i> Analyse en cours...
           } @else {
             <i class="fas fa-play"></i> Lancer le rapprochement
@@ -14,48 +14,6 @@
         </button>
       </div>
 
-      <!-- Progress overlay -->
-      @if (running()) {
-        <div class="progress-overlay">
-          <div class="progress-card">
-            <div class="progress-header">
-              <div class="progress-icon">
-                <div class="pulse-ring"></div>
-                <div class="pulse-dot"></div>
-              </div>
-              <h3>Rapprochement en cours</h3>
-            </div>
-
-            <div class="progress-info">
-              <span class="progress-label">{{ progressCurrent() }} / {{ progressTotal() }} mouvements traites</span>
-              <span class="progress-percent">{{ progressPercent() }}%</span>
-            </div>
-
-            <div class="progress-bar-track">
-              <div class="progress-bar-fill" [style.width.%]="progressPercent()"></div>
-            </div>
-
-            @if (progressCurrentLabel()) {
-              <p class="progress-detail">{{ progressCurrentLabel() }}</p>
-            }
-
-            <div class="progress-stats">
-              <div class="stat exact">
-                <span class="stat-count">{{ statsExact() }}</span>
-                <span class="stat-label">Exact</span>
-              </div>
-              <div class="stat partial">
-                <span class="stat-count">{{ statsPartial() }}</span>
-                <span class="stat-label">Partiel</span>
-              </div>
-              <div class="stat no-match">
-                <span class="stat-count">{{ statsNoMatch() }}</span>
-                <span class="stat-label">Sans correspondance</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      }
 
       @if (error()) {
         <div class="error-msg">{{ error() }}</div>

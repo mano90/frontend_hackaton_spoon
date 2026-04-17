@@ -3,9 +3,10 @@ declare const Vivus: any;
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NgxSpinnerModule } from 'ngx-spinner';
-import { firstValueFrom, forkJoin } from 'rxjs';
+import { forkJoin } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiService } from '../../services/api.service';
+import { RapprochementRunService } from '../../services/rapprochement-run.service';
 
 @Component({
   selector: 'app-rapprochement',
@@ -17,28 +18,16 @@ import { ApiService } from '../../services/api.service';
 export class RapprochementComponent implements OnInit, OnDestroy, AfterViewInit {
   private api = inject(ApiService);
   private sanitizer = inject(DomSanitizer);
+  readonly run = inject(RapprochementRunService);
 
   rapprochements = signal<any[]>([]);
   mouvementsMap = signal<Record<string, any>>({});
   facturesMap = signal<Record<string, any>>({});
-  running = signal(false);
   error = signal('');
 
   drawerFacture = signal<any>(null);
   drawerOpen = signal(false);
 
-  progressTotal = signal(0);
-  progressCurrent = signal(0);
-  progressCurrentLabel = signal('');
-  statsExact = signal(0);
-  statsPartial = signal(0);
-  statsNoMatch = signal(0);
-
-  progressPercent = computed(() => {
-    const total = this.progressTotal();
-    if (total === 0) return 0;
-    return Math.round((this.progressCurrent() / total) * 100);
-  });
   canGenerateRecapPdf = computed(() => this.rapprochements().some((r: any) => r?.confirmed === true));
 
   recapOpen = signal(false);
@@ -125,6 +114,13 @@ export class RapprochementComponent implements OnInit, OnDestroy, AfterViewInit 
     this.api.deleteRapprochement(id).subscribe(() => this.load());
   }
 
+  /** Lance le rapprochement via le service singleton (survit aux navigations). */
+  async runAll() {
+    await this.run.runAll();
+    // Recharger les résultats une fois terminé si on est encore sur la page
+    if (!this.run.running()) this.load();
+  }
+
   openRecapViewer() {
     if (!this.canGenerateRecapPdf()) return;
     this.recapOpen.set(true);
@@ -191,53 +187,6 @@ export class RapprochementComponent implements OnInit, OnDestroy, AfterViewInit 
     if (this.recapObjectUrl) {
       URL.revokeObjectURL(this.recapObjectUrl);
       this.recapObjectUrl = null;
-    }
-  }
-
-  async runAll() {
-    this.running.set(true);
-    this.error.set('');
-    this.progressCurrent.set(0);
-    this.statsExact.set(0);
-    this.statsPartial.set(0);
-    this.statsNoMatch.set(0);
-    this.progressCurrentLabel.set('Recuperation des mouvements...');
-
-    try {
-      const { ids } = await firstValueFrom(this.api.getSortieIds());
-      this.progressTotal.set(ids.length);
-
-      if (ids.length === 0) {
-        this.running.set(false);
-        this.error.set('Aucun mouvement a traiter.');
-        return;
-      }
-
-      for (let i = 0; i < ids.length; i++) {
-        const mv = this.mouvementsMap()[ids[i]];
-        const mvLabel = mv?.libelle || mv?.reference || `mouvement ${i + 1}`;
-        this.progressCurrentLabel.set(`Analyse : ${mvLabel}`);
-        try {
-          const res = await firstValueFrom(this.api.runRapprochement(ids[i]));
-          if (res?.rapprochement) {
-            const status = res.rapprochement.status;
-            if (status === 'exact') this.statsExact.update(v => v + 1);
-            else if (status === 'partial') this.statsPartial.update(v => v + 1);
-            else this.statsNoMatch.update(v => v + 1);
-          }
-        } catch {
-          this.statsNoMatch.update(v => v + 1);
-        }
-        this.progressCurrent.set(i + 1);
-      }
-
-      this.progressCurrentLabel.set('Termine !');
-      await new Promise(r => setTimeout(r, 800));
-      this.running.set(false);
-      this.load();
-    } catch (err: any) {
-      this.running.set(false);
-      this.error.set(err?.error?.error || 'Erreur lors du rapprochement');
     }
   }
 }
