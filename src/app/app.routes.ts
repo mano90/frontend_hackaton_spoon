@@ -9,5 +9,6 @@ export const routes: Routes = [
   { path: 'timeline', loadComponent: () => import('./pages/timeline/timeline').then(m => m.TimelineComponent) },
   { path: 'query', loadComponent: () => import('./pages/query/query').then(m => m.QueryComponent) },
   { path: 'config', loadComponent: () => import('./pages/config/config').then(m => m.ConfigComponent) },
+  { path: 'integrations', loadComponent: () => import('./pages/integrations/integrations').then(m => m.IntegrationsComponent) },
   { path: 'm3', loadComponent: () => import('./pages/m3/m3').then(m => m.M3Component) },
 ];

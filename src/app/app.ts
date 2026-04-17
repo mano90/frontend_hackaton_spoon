@@ -76,6 +76,11 @@ import { PendingAlertsService } from './services/pending-alerts.service';
               <i class="fas fa-sliders-h"></i><span class="link-text">Tolérance</span>
             </a>
           </li>
+          <li>
+            <a routerLink="/integrations" routerLinkActive="active" [attr.title]="layout.sidebarCollapsed() ? 'Intégrations' : null">
+              <i class="fas fa-cog"></i><span class="link-text">Intégrations</span>
+            </a>
+          </li>
         </ul>
       </nav>
       <main class="content">

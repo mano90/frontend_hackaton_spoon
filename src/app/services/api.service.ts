@@ -240,6 +240,87 @@ export class ApiService {
   resetConfig(): Observable<{ success: boolean; config: any }> { return this.http.post<{ success: boolean; config: any }>(`${API_BASE}/config/reset`, {}); }
 
   // Stats
+  getStats(): Observable<any> { return this.http.get(`${BASE}/stats`); }
+
+  // Intégrations (Salesforce / ERP)
+  getSalesforceStatus(): Observable<SalesforceStatus> {
+    return this.http.get<SalesforceStatus>(`${BASE}/integrations/salesforce/status`);
+  }
+  connectSalesforce(payload: SalesforceConnectPayload): Observable<SalesforceConnectResponse> {
+    return this.http.post<SalesforceConnectResponse>(`${BASE}/integrations/salesforce/connect`, payload);
+  }
+  disconnectSalesforce(): Observable<{ success: boolean }> {
+    return this.http.post<{ success: boolean }>(`${BASE}/integrations/salesforce/disconnect`, {});
+  }
+  listSalesforceSObjects(): Observable<{ total: number; objects: SalesforceSObject[] }> {
+    return this.http.get<{ total: number; objects: SalesforceSObject[] }>(
+      `${BASE}/integrations/salesforce/sobjects`
+    );
+  }
+  syncSalesforceData(payload: SalesforceSyncPayload): Observable<SalesforceSyncResult> {
+    return this.http.post<SalesforceSyncResult>(
+      `${BASE}/integrations/salesforce/sync`, payload
+    );
+  }
+}
+
+export interface SalesforceSyncPayload {
+  dateFrom?: string;
+  dateTo?: string;
+  includeEmails?: boolean;
+}
+
+export interface SalesforceSyncResult {
+  mouvements: number;
+  documents: number;
+  purchaseOrders: number;
+  supplierInvoices: number;
+  reconciliations: number;
+  pdfs: number;
+  errors: string[];
+}
+
+export interface SalesforceSObject {
+  name: string;
+  label: string;
+  labelPlural?: string;
+  custom: boolean;
+  queryable: boolean;
+  createable: boolean;
+  updateable: boolean;
+  deletable: boolean;
+  keyPrefix?: string | null;
+}
+
+export interface SalesforceStatus {
+  connected: boolean;
+  hasCredentials: boolean;
+  username?: string;
+  env?: 'sandbox' | 'production';
+  instanceUrl?: string;
+  issuedAt?: string;
+  envDefaults: {
+    hasClientId: boolean;
+    hasClientSecret: boolean;
+    loginUrl: string;
+    env: 'sandbox' | 'production';
+  };
+}
+
+export interface SalesforceConnectPayload {
+  env?: 'sandbox' | 'production';
+  loginUrl?: string;
+}
+
+export interface SalesforceConnectResponse {
+  success: boolean;
+  error?: string;
+  session?: {
+    username: string;
+    instanceUrl: string;
+    env: 'sandbox' | 'production';
+    issuedAt: string;
+  };
   getStats(): Observable<any> {
     return this.http.get(`${API_BASE}/stats`);
   }
