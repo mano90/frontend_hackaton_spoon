@@ -220,7 +220,15 @@ export class ApiService {
   runAllRapprochements(): Observable<any> { return this.http.post(`${API_BASE}/rapprochement/run-all`, {}); }
   getRapprochements(): Observable<any[]> { return this.http.get<any[]>(`${API_BASE}/rapprochement`); }
   confirmRapprochement(id: string): Observable<any> { return this.http.post(`${API_BASE}/rapprochement/confirm/${id}`, {}); }
+  unconfirmRapprochement(id: string): Observable<any> { return this.http.post(`${API_BASE}/rapprochement/unconfirm/${id}`, {}); }
   deleteRapprochement(id: string): Observable<any> { return this.http.delete(`${API_BASE}/rapprochement/${id}`); }
+  getRapprochementRecapPdfUrl(disposition: 'inline' | 'attachment' = 'inline'): string {
+    return `${API_BASE}/rapprochement/recap-pdf?disposition=${disposition}`;
+  }
+  /** Blob PDF récap (inline) — pour affichage iframe + téléchargement côté composant. */
+  getRapprochementRecapPdfBlob(): Observable<Blob> {
+    return this.http.get(this.getRapprochementRecapPdfUrl('inline'), { responseType: 'blob' });
+  }
 
   // Timeline
   getTimeline(): Observable<any[]> { return this.http.get<any[]>(`${API_BASE}/timeline`); }
