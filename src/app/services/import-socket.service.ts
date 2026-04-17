@@ -144,6 +144,8 @@ export class ImportSocketService {
   clearSalesforceSync(): void {
     this.salesforceSyncProgress.set(null);
     this.salesforceSyncLog.set([]);
+  }
+  
   clearM3FacturesProgress(): void {
     this.m3FacturesProgress.set(null);
   }
