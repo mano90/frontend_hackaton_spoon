@@ -11,6 +11,15 @@ export type ImportProgressEvent = {
   total?: number;
 };
 
+export type SalesforceSyncProgressEvent = {
+  phase: 'started' | 'fetching' | 'saving' | 'downloading_pdf' | 'done' | 'error';
+  message: string;
+  percent: number;
+  objectName?: string;
+  current?: number;
+  total?: number;
+};
+
 export type DocumentsBatchProgressEvent = {
   phase: 'started' | 'processing' | 'linking' | 'done' | 'error';
   message: string;
@@ -32,6 +41,8 @@ export class ImportSocketService {
   readonly progress = signal<ImportProgressEvent | null>(null);
   readonly documentsBatchProgress = signal<DocumentsBatchProgressEvent | null>(null);
   readonly documentsBatchLog = signal<string[]>([]);
+  readonly salesforceSyncProgress = signal<SalesforceSyncProgressEvent | null>(null);
+  readonly salesforceSyncLog = signal<string[]>([]);
   readonly socketId = signal<string | null>(null);
 
   /** Connexion Socket.io ; retourne l’id à envoyer au backend pour les événements `import:progress`. */
@@ -69,6 +80,13 @@ export class ImportSocketService {
             ? `[${ev.index ?? '?'}/${ev.total ?? '?'}] ${ev.fileName} — ${ev.outcome || ev.message}`
             : ev.message;
           this.documentsBatchLog.update((log) => [...log, line].slice(-100));
+        });
+        s.on('salesforce-sync:progress', (ev: SalesforceSyncProgressEvent) => {
+          this.salesforceSyncProgress.set(ev);
+          const line = ev.objectName
+            ? `[${ev.objectName}] ${ev.message}`
+            : ev.message;
+          this.salesforceSyncLog.update((log) => [...log, line].slice(-100));
         });
       };
 
@@ -108,5 +126,10 @@ export class ImportSocketService {
   clearDocumentsBatch(): void {
     this.documentsBatchProgress.set(null);
     this.documentsBatchLog.set([]);
+  }
+
+  clearSalesforceSync(): void {
+    this.salesforceSyncProgress.set(null);
+    this.salesforceSyncLog.set([]);
   }
 }

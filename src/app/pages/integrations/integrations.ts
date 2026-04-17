@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -6,7 +6,27 @@ import {
   SalesforceConnectPayload,
   SalesforceSObject,
   SalesforceStatus,
+  SalesforceSyncPayload,
+  SalesforceSyncResult,
 } from '../../services/api.service';
+import { ImportSocketService } from '../../services/import-socket.service';
+
+export interface DetectedObject {
+  name: string;
+  label: string;
+  description: string;
+  found: boolean;
+  selected: boolean;
+}
+
+const EXPECTED_OBJECTS: { name: string; label: string; description: string }[] = [
+  { name: 'Account', label: 'Comptes', description: 'Comptes fournisseurs et clients.' },
+  { name: 'Bank_Movement__c', label: 'Mouvements bancaires', description: 'Relevés bancaires : virements, prélèvements, CB.' },
+  { name: 'Commercial_Document__c', label: 'Documents commerciaux', description: 'Devis, bons de commande, bons de livraison, factures, emails.' },
+  { name: 'Purchase_Order__c', label: 'Bons de commande', description: 'Commandes fournisseurs liées aux documents.' },
+  { name: 'Supplier_Invoice__c', label: 'Factures fournisseurs', description: 'Factures reçues, liées aux commandes et documents.' },
+  { name: 'Reconciliation__c', label: 'Rapprochements', description: 'Rapprochement entre mouvements bancaires et factures.' },
+];
 
 @Component({
   selector: 'app-integrations',
@@ -17,6 +37,7 @@ import {
 })
 export class IntegrationsComponent implements OnInit {
   private api = inject(ApiService);
+  readonly importSocket = inject(ImportSocketService);
 
   status = signal<SalesforceStatus | null>(null);
   loading = signal(false);
@@ -24,22 +45,15 @@ export class IntegrationsComponent implements OnInit {
   error = signal('');
   success = signal('');
 
-  sObjects = signal<SalesforceSObject[] | null>(null);
   sObjectsLoading = signal(false);
   sObjectsError = signal('');
-  filter = signal('');
-  onlyCustom = signal(false);
+  detectedObjects = signal<DetectedObject[] | null>(null);
 
-  filteredSObjects = computed(() => {
-    const list = this.sObjects();
-    if (!list) return [];
-    const q = this.filter().trim().toLowerCase();
-    return list.filter(o => {
-      if (this.onlyCustom() && !o.custom) return false;
-      if (!q) return true;
-      return o.name.toLowerCase().includes(q) || o.label.toLowerCase().includes(q);
-    });
-  });
+  // Sync
+  syncing = signal(false);
+  syncOverlayOpen = signal(false);
+  syncResult = signal<SalesforceSyncResult | null>(null);
+  syncForm: SalesforceSyncPayload = { dateFrom: '', dateTo: '', includeEmails: false };
 
   overrideOpen = signal(false);
   form: SalesforceConnectPayload = { env: 'sandbox', loginUrl: '' };
@@ -65,8 +79,7 @@ export class IntegrationsComponent implements OnInit {
   }
 
   connect() {
-    this.error.set('');
-    this.success.set('');
+    this.error.set(''); this.success.set('');
     this.connecting.set(true);
     this.api.connectSalesforce(this.form).subscribe({
       next: res => {
@@ -88,21 +101,19 @@ export class IntegrationsComponent implements OnInit {
 
   disconnect() {
     this.api.disconnectSalesforce().subscribe({
-      next: () => {
-        this.success.set('Déconnecté.');
-        this.sObjects.set(null);
-        this.refresh();
-      },
+      next: () => { this.success.set('Déconnecté.'); this.detectedObjects.set(null); this.refresh(); },
       error: () => this.error.set('Échec de la déconnexion.'),
     });
   }
 
-  loadSObjects() {
-    this.sObjectsError.set('');
-    this.sObjectsLoading.set(true);
+  detectObjects() {
+    this.sObjectsError.set(''); this.sObjectsLoading.set(true);
     this.api.listSalesforceSObjects().subscribe({
       next: ({ objects }) => {
-        this.sObjects.set(objects);
+        const orgNames = new Set(objects.map(o => o.name));
+        this.detectedObjects.set(EXPECTED_OBJECTS.map(exp => ({
+          ...exp, found: orgNames.has(exp.name), selected: orgNames.has(exp.name),
+        })));
         this.sObjectsLoading.set(false);
       },
       error: err => {
@@ -112,16 +123,59 @@ export class IntegrationsComponent implements OnInit {
     });
   }
 
-  clearSObjects() {
-    this.sObjects.set(null);
-    this.filter.set('');
-    this.onlyCustom.set(false);
+  toggleObject(obj: DetectedObject) {
+    const list = this.detectedObjects();
+    if (!list) return;
+    this.detectedObjects.set(list.map(o => o.name === obj.name ? { ...o, selected: !o.selected } : o));
   }
 
-  get envDefaults() {
-    return this.status()?.envDefaults;
+  hasAllRequired(): boolean {
+    return this.detectedObjects()?.every(o => o.found) ?? false;
   }
 
+  confirmObjects() {
+    const n = this.detectedObjects()?.filter(o => o.selected).length ?? 0;
+    this.success.set(`Configuration confirmée : ${n} objets sélectionnés.`);
+  }
+
+  async startSync() {
+    this.syncing.set(true);
+    this.syncOverlayOpen.set(true);
+    this.syncResult.set(null);
+    this.error.set('');
+    this.importSocket.clearSalesforceSync();
+
+    await this.importSocket.ensureSocket();
+
+    const payload: SalesforceSyncPayload = {
+      dateFrom: this.syncForm.dateFrom || undefined,
+      dateTo: this.syncForm.dateTo || undefined,
+      includeEmails: this.syncForm.includeEmails,
+    };
+
+    this.api.syncSalesforceData(payload).subscribe({
+      next: result => {
+        this.syncResult.set(result);
+        this.syncing.set(false);
+      },
+      error: err => {
+        this.syncing.set(false);
+        this.error.set(err?.error?.error || 'Erreur lors de la synchronisation.');
+      },
+    });
+  }
+
+  closeSyncOverlay() {
+    this.syncOverlayOpen.set(false);
+    this.importSocket.clearSalesforceSync();
+  }
+
+  clearDetection() {
+    this.detectedObjects.set(null);
+    this.sObjectsError.set('');
+  }
+
+  get envDefaults() { return this.status()?.envDefaults; }
   get credsMissing(): boolean {
     const d = this.envDefaults;
     return !d ? false : !(d.hasClientId && d.hasClientSecret);

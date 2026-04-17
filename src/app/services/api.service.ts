@@ -212,6 +212,27 @@ export class ApiService {
       `${BASE}/integrations/salesforce/sobjects`
     );
   }
+  syncSalesforceData(payload: SalesforceSyncPayload): Observable<SalesforceSyncResult> {
+    return this.http.post<SalesforceSyncResult>(
+      `${BASE}/integrations/salesforce/sync`, payload
+    );
+  }
+}
+
+export interface SalesforceSyncPayload {
+  dateFrom?: string;
+  dateTo?: string;
+  includeEmails?: boolean;
+}
+
+export interface SalesforceSyncResult {
+  mouvements: number;
+  documents: number;
+  purchaseOrders: number;
+  supplierInvoices: number;
+  reconciliations: number;
+  pdfs: number;
+  errors: string[];
 }
 
 export interface SalesforceSObject {
