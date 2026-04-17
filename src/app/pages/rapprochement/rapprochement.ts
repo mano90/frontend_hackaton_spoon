@@ -80,6 +80,19 @@ export class RapprochementComponent implements OnInit, AfterViewInit {
     }
   }
 
+  /** Remplace les UUIDs bruts dans le texte IA par leur référence/libellé. */
+  formatExplanation(text: string): string {
+    if (!text) return text;
+    const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+    return text.replace(UUID_RE, (id) => {
+      const fac = this.facturesMap()[id];
+      if (fac) return fac.reference || fac.fournisseur || fac.fileName || id;
+      const mv = this.mouvementsMap()[id];
+      if (mv) return mv.libelle || mv.reference || id;
+      return id;
+    });
+  }
+
   closeDrawer() {
     this.drawerOpen.set(false);
     setTimeout(() => this.drawerFacture.set(null), 300);
@@ -113,7 +126,9 @@ export class RapprochementComponent implements OnInit, AfterViewInit {
       }
 
       for (let i = 0; i < ids.length; i++) {
-        this.progressCurrentLabel.set(`Analyse du mouvement ${i + 1} / ${ids.length}...`);
+        const mv = this.mouvementsMap()[ids[i]];
+        const mvLabel = mv?.libelle || mv?.reference || `mouvement ${i + 1}`;
+        this.progressCurrentLabel.set(`Analyse : ${mvLabel}`);
         try {
           const res = await firstValueFrom(this.api.runRapprochement(ids[i]));
           if (res?.rapprochement) {

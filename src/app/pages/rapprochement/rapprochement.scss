@@ -136,6 +136,8 @@
       cursor: pointer; transition: background 0.15s, border-color 0.15s;
     }
     .facture-chip:hover { background: #e0e7ff; border-color: #6366f1; }
+    .chip-ref { font-weight: 600; }
+    .chip-fournisseur { color: #6d7a8a; font-weight: 400; font-size: 0.78rem; }
     .chip-amount { color: #6366f1; font-weight: 700; margin-left: 0.1rem; }
     .chip-arrow { font-size: 0.65rem; color: #a5b4fc; }
 

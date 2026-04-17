@@ -92,7 +92,7 @@
                   <span class="transaction-date"><i class="fas fa-calendar-alt"></i> {{ mouvement.date }}</span>
                 } @else {
                   <span class="transaction-libelle transaction-libelle--unknown">
-                    <i class="fas fa-question-circle"></i> {{ r.mouvementId | slice:0:8 }}...
+                    <i class="fas fa-question-circle"></i> Mouvement inconnu
                   </span>
                 }
               </div>
@@ -117,10 +117,13 @@
                   <button class="facture-chip" (click)="openDrawer(fid)" title="Voir les détails de la facture">
                     <i class="fas fa-file-invoice-dollar"></i>
                     @if (fac) {
-                      {{ fac.reference || (fid | slice:0:8) + '...' }}
+                      <span class="chip-ref">{{ fac.reference || fac.fileName || 'Facture sans réf.' }}</span>
+                      @if (fac.fournisseur) {
+                        <span class="chip-fournisseur">{{ fac.fournisseur }}</span>
+                      }
                       <span class="chip-amount">{{ fac.montant | number:'1.2-2' }} EUR</span>
                     } @else {
-                      {{ fid | slice:0:8 }}...
+                      <span class="chip-ref">Facture inconnue</span>
                     }
                     <i class="fas fa-chevron-right chip-arrow"></i>
                   </button>
@@ -131,7 +134,7 @@
             <!-- Analyse IA -->
             <div class="ai-explanation">
               <i class="fas fa-robot"></i> <strong>Analyse IA :</strong>
-              <p>{{ r.aiExplanation }}</p>
+              <p>{{ formatExplanation(r.aiExplanation) }}</p>
             </div>
 
 
